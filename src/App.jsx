@@ -1,4 +1,5 @@
 import React,{ useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom";
 import { Provider, useSelector, useDispatch, shallowEqual } from "react-redux";
 import { store, sel, uiActions, quranActions, playerActions, learnActions, collectionsActions, voiceActions, goalsActions, setLDataThunk } from "./store";
@@ -612,6 +613,25 @@ const CSS = `
   .ctrl-btn.play-btn{width:38px;height:38px;background:var(--gold);border-color:var(--gold);color:var(--bg);font-size:14px;}
   .ctrl-btn.play-btn:hover{background:var(--gold2);}
   .ctrl-btn.loop-on{border-color:var(--teal);color:var(--teal);background:rgba(62,184,160,.1);}
+  .reciter-trigger{gap:5px;padding:0 10px;width:auto;min-width:44px;font-family:'Cinzel',serif;font-size:10px;}
+  .reciter-trigger-label{max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .reciter-sheet-backdrop{position:fixed;inset:0;z-index:350;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);}
+  .reciter-sheet{position:fixed;z-index:351;right:16px;bottom:76px;width:min(420px,calc(100vw - 32px));max-height:min(640px,calc(100dvh - 100px));display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border2);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden;}
+  .reciter-sheet-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid var(--border);}
+  .reciter-sheet-title{font-family:'Cinzel',serif;font-size:12px;letter-spacing:2px;color:var(--gold2);}
+  .reciter-sheet-current{font-size:10px;color:var(--text3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .reciter-sheet-close{width:40px;height:40px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:20px;cursor:pointer;flex-shrink:0;}
+  .reciter-search{margin:12px 16px 8px;width:calc(100% - 32px);box-sizing:border-box;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:11px 12px;color:var(--text);font-size:16px;outline:none;}
+  .reciter-search:focus{border-color:var(--gold);}
+  .reciter-list{overflow-y:auto;padding:4px 12px 12px;overscroll-behavior:contain;}
+  .reciter-option{width:100%;min-height:52px;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;background:transparent;border:1px solid transparent;color:var(--text2);font-size:14px;text-align:left;cursor:pointer;}
+  .reciter-option.selected{background:rgba(201,168,76,.12);border-color:var(--gold);color:var(--gold2);}
+  .reciter-option-flag{font-size:20px;line-height:1;}
+  .reciter-option-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .reciter-option-check{font-size:16px;color:var(--gold2);}
+  .reciter-empty{padding:24px 12px;text-align:center;color:var(--text3);font-size:13px;}
+  .reciter-sheet-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--border);color:var(--text3);font-size:11px;}
+  .reciter-reset{min-height:36px;padding:0 10px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--text2);font-size:11px;cursor:pointer;}
   .player-progress{flex:1;display:flex;align-items:center;gap:8px;min-width:0;}
   .progress-bar-wrap{flex:1;height:3px;background:var(--border);border-radius:2px;position:relative;}
   .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--teal));border-radius:2px;transition:width .3s;}
@@ -1111,6 +1131,12 @@ const CSS = `
     .player-row{ padding:6px 14px; gap:10px; }
     .ctrl-btn{ width:30px; height:30px; font-size:11px; }
     .ctrl-btn.play-btn{ width:36px; height:36px; font-size:13px; }
+    .reciter-trigger{position:fixed;right:12px;bottom:68px;z-index:201;min-height:44px;padding:0 14px;border-radius:22px;background:var(--surface2);box-shadow:0 6px 20px rgba(0,0,0,.35);}
+    .reciter-trigger-label{display:inline;max-width:120px;}
+    .reciter-sheet{right:0;bottom:0;width:100%;max-height:min(82dvh,680px);border-radius:18px 18px 0 0;}
+    .reciter-sheet-header{padding:18px 16px 14px;}
+    .reciter-list{padding-bottom:16px;}
+    .reciter-option{min-height:56px;font-size:16px;}
     .progress-text{ display:none; }
     .loop-bar{ padding:4px 14px 6px; gap:6px; }
     .loop-rep-wrap{ display:none; }
@@ -3102,6 +3128,7 @@ function AppInner({ currentUser, onSignOut }) {
   const [showLangPanel,    setShowLangPanel]    = React.useState(false);
   const [recitatorId,      setRecitatorId]      = useState(() => { try { return localStorage.getItem('quran_recitator') || 'ar.alafasy'; } catch { return 'ar.alafasy'; } });
   const [showRecitPanel,   setShowRecitPanel]   = useState(false);
+  const [recitatorSearch,  setRecitatorSearch]  = useState("");
   // Bumped whenever a reciter's bitrate self-heals (markBitrateBad) so components
   // re-render and pick up the newly-known-good bitrate for that reciter.
   const [bitrateVersion,   setBitrateVersion]   = useState(0);
@@ -3136,6 +3163,10 @@ function AppInner({ currentUser, onSignOut }) {
 
   const bitrate   = getReciterBitrate(recitatorId); // eslint-disable-line react-hooks/exhaustive-deps
   const audioBase = `${AUDIO_CDN_ROOT}/${bitrate}/${recitatorId}`;
+  const activeRecitator = RECITATORS.find(r => r.id === recitatorId);
+  const visibleRecitators = RECITATORS.filter(r =>
+    r.label.toLowerCase().includes(recitatorSearch.trim().toLowerCase())
+  );
   const toggleQalqala      = () => dispatch(uiActions.toggleQalqala());
   const toggleMadd         = () => dispatch(uiActions.toggleMadd());
   const toggleIzhar        = () => dispatch(uiActions.toggleIzhar());
@@ -5561,58 +5592,55 @@ function AppInner({ currentUser, onSignOut }) {
                   style={{ fontSize: 14 }}>🎤</button>
                 {/* Reciter picker */}
                 <button
-                  className={`ctrl-btn${showRecitPanel ? " loop-on" : ""}`}
-                  title={`Récitateur : ${RECITATORS.find(r => r.id === recitatorId)?.label || recitatorId}`}
-                  onClick={() => setShowRecitPanel(v => !v)}
-                  style={{ fontSize: 13 }}>
-                  {RECITATORS.find(r => r.id === recitatorId)?.flag || '🎙️'}
+                  className={`ctrl-btn reciter-trigger${showRecitPanel ? " loop-on" : ""}`}
+                  aria-haspopup="dialog"
+                  aria-expanded={showRecitPanel}
+                  aria-label={`Choisir le récitateur. Actuel : ${activeRecitator?.label || recitatorId}`}
+                  title={`Récitateur : ${activeRecitator?.label || recitatorId}`}
+                  onClick={() => { setRecitatorSearch(""); setShowRecitPanel(v => !v); }}>
+                  <span>{activeRecitator?.flag || '🎙️'}</span>
+                  <span className="reciter-trigger-label">{activeRecitator?.label || 'Récitateur'}</span>
                 </button>
               </div>
 
-              {showRecitPanel && (
-                <div style={{ display:'flex', flexDirection:'column', gap:2, margin:'6px 14px 4px',
-                  padding:6, background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8,
-                  maxHeight:280, overflowY:'auto' }}>
-                  {RECITATORS.map(r => (
-                    <button key={r.id} onClick={() => {
-                      const changed = r.id !== recitatorId;
-                      setRecitatorId(r.id);
-                      setShowRecitPanel(false);
-                      if (changed && mainAudioRef.current) {
-                        // reload current ayat with the new reciter, preserving play/pause state
-                        loadedAyatIdxRef.current = null;
-                        if (isMainPlaying) {
-                          mainAudioRef.current.load();
-                          mainAudioRef.current.play().catch(() => {});
-                          loadedAyatIdxRef.current = mainAyatIdx;
-                        }
-                      }
-                    }} style={{
-                      display:'flex', alignItems:'center', gap:8, padding:'6px 10px', borderRadius:6,
-                      background: r.id === recitatorId ? 'rgba(201,168,76,.12)' : 'transparent',
-                      border: r.id === recitatorId ? '1px solid var(--gold)' : '1px solid transparent',
-                      color: r.id === recitatorId ? 'var(--gold2)' : 'var(--text2)',
-                      fontSize:11, fontFamily:"'Cinzel',serif", cursor:'pointer', textAlign:'left' }}>
-                      <span style={{ fontSize:14 }}>{r.flag}</span>
-                      <span>{r.label}</span>
-                      <span style={{ marginLeft:'auto', fontSize:8, color:'var(--text3)', fontFamily:"'Cinzel',serif" }}>
-                        {_officialBitrates[r.id]?.[0] ? `${_officialBitrates[r.id][0]}k` : '…'}
-                      </span>
-                      {r.id === recitatorId && <span>✓</span>}
-                    </button>
-                  ))}
-
-                  <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:6, paddingTop:6,
-                    borderTop:'1px solid var(--border)' }}>
-                    <span style={{ fontSize:8, letterSpacing:1, color:'var(--text3)', fontFamily:"'Cinzel',serif" }}>
-                      DÉBIT OFFICIEL
-                    </span>
-                    <span style={{ fontSize:10, fontFamily:"'Cinzel',serif", color:'var(--gold2)',
-                      background:'rgba(201,168,76,.1)', border:'1px solid var(--gold)', borderRadius:5,
-                      padding:'2px 8px' }}>{bitrate} kbps</span>
-                    <button
-                      title="Revenir au débit officiel par défaut de ce récitateur"
-                      onClick={() => {
+              {showRecitPanel && createPortal(
+                <>
+                  <div className="reciter-sheet-backdrop" onClick={() => setShowRecitPanel(false)} aria-hidden="true" />
+                  <section className="reciter-sheet" role="dialog" aria-modal="true" aria-labelledby="reciter-sheet-title">
+                    <div className="reciter-sheet-header">
+                      <div style={{ minWidth:0 }}>
+                        <div id="reciter-sheet-title" className="reciter-sheet-title">CHOISIR UN RÉCITATEUR</div>
+                        <div className="reciter-sheet-current">Actuel · {activeRecitator?.label || recitatorId}</div>
+                      </div>
+                      <button className="reciter-sheet-close" onClick={() => setShowRecitPanel(false)} aria-label="Fermer le choix du récitateur">×</button>
+                    </div>
+                    <input className="reciter-search" type="search" autoFocus value={recitatorSearch}
+                      onChange={e => setRecitatorSearch(e.target.value)} placeholder="Rechercher un récitateur" aria-label="Rechercher un récitateur" />
+                    <div className="reciter-list">
+                      {visibleRecitators.map(r => (
+                        <button key={r.id} className={`reciter-option${r.id === recitatorId ? ' selected' : ''}`} onClick={() => {
+                          const changed = r.id !== recitatorId;
+                          setRecitatorId(r.id);
+                          setShowRecitPanel(false);
+                          if (changed && mainAudioRef.current) {
+                            loadedAyatIdxRef.current = null;
+                            if (isMainPlaying) {
+                              mainAudioRef.current.load();
+                              mainAudioRef.current.play().catch(() => {});
+                              loadedAyatIdxRef.current = mainAyatIdx;
+                            }
+                          }
+                        }}>
+                          <span className="reciter-option-flag">{r.flag}</span>
+                          <span className="reciter-option-name">{r.label}</span>
+                          {r.id === recitatorId && <span className="reciter-option-check" aria-label="Sélectionné">✓</span>}
+                        </button>
+                      ))}
+                      {visibleRecitators.length === 0 && <div className="reciter-empty">Aucun récitateur ne correspond à cette recherche.</div>}
+                    </div>
+                    <div className="reciter-sheet-footer">
+                      <span>Débit audio · {bitrate} kbps</span>
+                      <button className="reciter-reset" onClick={() => {
                         setReciterBitrate(recitatorId, bitrateOrderFor(recitatorId)[0]);
                         setBitrateVersion(v => v + 1);
                         loadedAyatIdxRef.current = null;
@@ -5621,15 +5649,11 @@ function AppInner({ currentUser, onSignOut }) {
                           loadedAyatIdxRef.current = mainAyatIdx;
                           if (isMainPlaying) playWhenReady();
                         }
-                      }}
-                      style={{ marginLeft:'auto', fontSize:9, padding:'3px 8px', borderRadius:5,
-                        fontFamily:"'Cinzel',serif", cursor:'pointer', background:'transparent',
-                        border:'1px solid rgba(255,255,255,.15)', color:'var(--text3)' }}>↺</button>
-                  </div>
-                  <div style={{ fontSize:7, color:'var(--text3)', padding:'2px 2px 0', lineHeight:1.4 }}>
-                    Détecté via l'API officielle (audio/audioSecondary) ; ajusté si ce débit venait à ne plus être disponible.
-                  </div>
-                </div>
+                      }}>Réinitialiser le débit</button>
+                    </div>
+                  </section>
+                </>,
+                document.body
               )}
 
               {(() => {
@@ -9236,7 +9260,7 @@ function UnknownPickQuestion({ q, onAnswer }) {
             {result ? '✓ EXACT !' : '✗ PAS TOUT À FAIT'}
           </div>
           {!result && (
-            <div style={{ fontSize:9, color:'var(--text3)', textAlign:'center', direction:'rtl',
+            <div style={{ color:'var(--text3)', textAlign:'center', direction:'rtl',
               fontFamily:"'Amiri Quran',serif", fontSize:14 }}>
               {correctSet.size === 0
                 ? (q.toRevise ? 'Aucun mot marqué à réviser' : 'Aucun mot inconnu')
@@ -16880,11 +16904,11 @@ function LectureMode({ ayat, surahNum, audioUrl, isMainPlaying, timestamps, onLo
   };
 
   const captureStart = (wi, ci) => {
-    const ms = Math.round(audioRef.current?.currentTime * 1000 ?? 0);
+    const ms = Math.round((audioRef.current?.currentTime ?? 0) * 1000);
     setCharField(wi, ci, 'start', ms);
   };
   const captureEnd = (wi, ci) => {
-    const ms = Math.round(audioRef.current?.currentTime * 1000 ?? 0);
+    const ms = Math.round((audioRef.current?.currentTime ?? 0) * 1000);
     setCharField(wi, ci, 'end', ms);
   };
 
@@ -18333,8 +18357,8 @@ function CreatePartFromAudio({ ayat, timestamps, audioUrl, existingWordIndices, 
   const fmtMs = (ms) => ms == null ? "--:--.---"
     : `${String(Math.floor(ms / 60000)).padStart(2,"0")}:${String(Math.floor((ms % 60000) / 1000)).padStart(2,"0")}.${String(Math.floor(ms % 1000)).padStart(3,"0")}`;
 
-  const captureStart = () => setStartMs(Math.round(audioRef.current?.currentTime * 1000 ?? 0));
-  const captureEnd   = () => setEndMs(Math.round(audioRef.current?.currentTime * 1000 ?? 0));
+  const captureStart = () => setStartMs(Math.round((audioRef.current?.currentTime ?? 0) * 1000));
+  const captureEnd   = () => setEndMs(Math.round((audioRef.current?.currentTime ?? 0) * 1000));
 
   const canCreate = coveredIndices.length > 0;
 
