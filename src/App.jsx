@@ -9074,7 +9074,7 @@ function UnknownPickQuestion({ q, onAnswer }) {
             {result ? '✓ EXACT !' : '✗ PAS TOUT À FAIT'}
           </div>
           {!result && (
-            <div style={{ fontSize:9, color:'var(--text3)', textAlign:'center', direction:'rtl',
+              <div style={{ color:'var(--text3)', textAlign:'center', direction:'rtl',
               fontFamily:"'Amiri Quran',serif", fontSize:14 }}>
               {correctSet.size === 0
                 ? (q.toRevise ? 'Aucun mot marqué à réviser' : 'Aucun mot inconnu')
@@ -16718,11 +16718,11 @@ function LectureMode({ ayat, surahNum, audioUrl, isMainPlaying, timestamps, onLo
   };
 
   const captureStart = (wi, ci) => {
-    const ms = Math.round(audioRef.current?.currentTime * 1000 ?? 0);
+    const ms = Math.round((audioRef.current?.currentTime ?? 0) * 1000);
     setCharField(wi, ci, 'start', ms);
   };
   const captureEnd = (wi, ci) => {
-    const ms = Math.round(audioRef.current?.currentTime * 1000 ?? 0);
+    const ms = Math.round((audioRef.current?.currentTime ?? 0) * 1000);
     setCharField(wi, ci, 'end', ms);
   };
 
@@ -18171,8 +18171,8 @@ function CreatePartFromAudio({ ayat, timestamps, audioUrl, existingWordIndices, 
   const fmtMs = (ms) => ms == null ? "--:--.---"
     : `${String(Math.floor(ms / 60000)).padStart(2,"0")}:${String(Math.floor((ms % 60000) / 1000)).padStart(2,"0")}.${String(Math.floor(ms % 1000)).padStart(3,"0")}`;
 
-  const captureStart = () => setStartMs(Math.round(audioRef.current?.currentTime * 1000 ?? 0));
-  const captureEnd   = () => setEndMs(Math.round(audioRef.current?.currentTime * 1000 ?? 0));
+  const captureStart = () => setStartMs(Math.round((audioRef.current?.currentTime ?? 0) * 1000));
+  const captureEnd   = () => setEndMs(Math.round((audioRef.current?.currentTime ?? 0) * 1000));
 
   const canCreate = coveredIndices.length > 0;
 
