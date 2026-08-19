@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+build/
+
+# Vite
+.vite/
+
+# Capacitor
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+android/.idea/
+android/local.properties
+
+# iOS
+ios/App/Pods/
+ios/App/build/
+ios/DerivedData/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.vs/*
+
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+#other
+doha/*
+server/*
+serverTimestamps/*
+time/*
+whisper-server/*
+other/*
+
+
