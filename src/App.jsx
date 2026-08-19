@@ -26,12 +26,12 @@ import {
 // ─── Firebase config ─────────────────────────────────────────────────────────
 // Replace with your actual Firebase project config
 const firebaseConfig = {
-  apiKey: "AIzaSyCyc7uas-L0MN8NXYxit8NY9Oj5rD2TeCI",
-  authDomain: "quran-learn26.firebaseapp.com",
-  projectId: "quran-learn26",
-  storageBucket: "quran-learn26.firebasestorage.app",
-  messagingSenderId: "744155115870",
-  appId: "1:744155115870:web:f8842cd8bf2f58b59c1fcf",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 const firebaseApp  = initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
