@@ -1,5 +1,4 @@
 import React,{ useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { createPortal } from "react-dom";
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom";
 import { Provider, useSelector, useDispatch, shallowEqual } from "react-redux";
 import { store, sel, uiActions, quranActions, playerActions, learnActions, collectionsActions, voiceActions, goalsActions, setLDataThunk } from "./store";
@@ -259,6 +258,7 @@ const CSS = `
     --text:#e8e4d8; --text2:#a89f8c; --text3:#6e6659;
     --learned-bg:#1a2e20; --learned-border:#2d5a38; --highlight:rgba(201,168,76,.18);
     --sidebar-w:280px; --player-h:64px; --player-loop-h:50px;
+    --header-h:calc(54px + env(safe-area-inset-top, 0px));
     --radius:8px; --radius-sm:5px;
     --transition:.18s ease;
   }
@@ -272,43 +272,75 @@ const CSS = `
 
   /* ── HEADER ──────────────────────────────────────────────────────── */
   .header{
-    background:linear-gradient(180deg,#0e1018 0%,#0a0c14 100%);
-    border-bottom:1px solid rgba(201,168,76,.12);
-    padding:0 14px; height:54px;
-    display:flex; align-items:center; gap:8px;
-    flex-shrink:0; position:relative; z-index:100;
-    flex-wrap:nowrap; overflow:hidden;
-    box-shadow:0 2px 24px rgba(0,0,0,.5);
+    background:linear-gradient(180deg,rgba(16,19,30,0.95) 0%,rgba(10,12,20,0.98) 100%);
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    border-bottom:1px solid rgba(201,168,76,.18);
+    padding:max(env(safe-area-inset-top, 0px), 0px) 14px 0 14px;
+    height:var(--header-h);
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    flex-shrink:0; position:relative; z-index:200;
+    box-shadow:0 4px 24px rgba(0,0,0,.45);
+    user-select:none;
   }
-  .header::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.4),transparent);}
-  .header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.2),transparent);}
-  .header-logo,.header-logo-mobile{font-size:15px;font-weight:700;letter-spacing:3px;color:var(--gold2);flex-shrink:0;text-shadow:0 0 20px rgba(201,168,76,.35);}
-  .header-logo span{color:var(--teal);text-shadow:0 0 16px rgba(62,184,160,.4);}
-  .header-subtitle{font-size:9px;letter-spacing:2px;color:var(--text3);}
+  .header::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 0%,rgba(201,168,76,.5) 50%,transparent 100%);}
+  .header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 0%,rgba(201,168,76,.25) 50%,transparent 100%);}
+  
+  .header-left{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .header-menu-btn{display:flex;width:38px;height:38px;border-radius:10px;border:1px solid rgba(201,168,76,.22);background:rgba(201,168,76,.06);color:var(--text2);cursor:pointer;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:all .2s cubic-bezier(0.4, 0, 0.2, 1);-webkit-tap-highlight-color:transparent;}
+  .header-menu-btn:hover{border-color:rgba(201,168,76,.6);color:var(--gold2);background:rgba(201,168,76,.14);box-shadow:0 0 12px rgba(201,168,76,.2);}
+  .header-menu-btn:active{transform:scale(0.94);}
+  
+  .header-logo{display:flex;flex-direction:column;align-items:flex-start;line-height:1.1;font-size:15px;font-weight:700;letter-spacing:2.5px;color:var(--gold2);flex-shrink:0;text-shadow:0 0 20px rgba(201,168,76,.35);cursor:pointer;}
+  .header-logo span.logo-highlight{color:var(--teal);text-shadow:0 0 16px rgba(62,184,160,.45);}
+  .header-logo .header-subtitle{font-size:6.5px;letter-spacing:3px;color:var(--text3);font-family:'Cinzel',serif;opacity:.8;}
   .header-bismillah{font-family:'Amiri Quran',serif;font-size:20px;color:var(--gold);opacity:.7;margin-left:auto;direction:rtl;}
-  .header-menu-btn{display:flex;width:36px;height:36px;border-radius:8px;border:1px solid rgba(201,168,76,.2);background:rgba(201,168,76,.04);color:var(--text2);cursor:pointer;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:all .2s;}
-  .header-menu-btn:hover{border-color:rgba(201,168,76,.5);color:var(--gold2);background:rgba(201,168,76,.1);}
 
   /* ── HEADER PAGE NAV ──────────────────────────────────────────────── */
-  .header-nav{display:flex;gap:3px;flex:1;min-width:0;background:rgba(255,255,255,.03);border-radius:10px;padding:3px;border:1px solid rgba(255,255,255,.06);}
-  .header-nav-btn{font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:.8px;padding:5px 8px;border:none;background:transparent;color:var(--text3);cursor:pointer;border-radius:7px;transition:all .2s;white-space:nowrap;flex:1;min-width:0;}
-  .header-nav-btn:hover{color:var(--text2);background:rgba(255,255,255,.05);}
-  .header-nav-btn.active-quran{background:linear-gradient(135deg,rgba(201,168,76,.22),rgba(201,168,76,.1));color:var(--gold2);box-shadow:0 1px 8px rgba(201,168,76,.15),inset 0 1px 0 rgba(201,168,76,.15);}
-  .header-nav-btn.active-prononciation{background:linear-gradient(135deg,rgba(62,184,160,.22),rgba(62,184,160,.1));color:var(--teal2);box-shadow:0 1px 8px rgba(62,184,160,.15),inset 0 1px 0 rgba(62,184,160,.15);}
-  .header-nav-btn.active-dashboard{background:linear-gradient(135deg,rgba(111,207,154,.22),rgba(111,207,154,.1));color:var(--green2);box-shadow:0 1px 8px rgba(111,207,154,.15),inset 0 1px 0 rgba(111,207,154,.15);}
-  .header-nav-btn.active-concordance{background:linear-gradient(135deg,rgba(201,168,76,.22),rgba(201,168,76,.1));color:var(--gold2);box-shadow:0 1px 8px rgba(201,168,76,.15),inset 0 1px 0 rgba(201,168,76,.15);}
-  .header-nav-btn.active-collections{background:linear-gradient(135deg,rgba(200,120,255,.22),rgba(200,120,255,.1));color:#c878ff;box-shadow:0 1px 8px rgba(200,120,255,.15),inset 0 1px 0 rgba(200,120,255,.15);}
-  .header-nav-btn.active-revision{background:linear-gradient(135deg,rgba(86,212,188,.22),rgba(86,212,188,.1));color:var(--teal2);box-shadow:0 1px 8px rgba(86,212,188,.15),inset 0 1px 0 rgba(86,212,188,.15);}
-  .header-nav-btn.active-revision{background:rgba(86,212,188,.15);color:var(--teal2);}
+  .header-nav{display:flex;align-items:center;gap:3px;flex:1;max-width:540px;min-width:0;background:rgba(255,255,255,.035);border-radius:12px;padding:3px;border:1px solid rgba(255,255,255,.07);box-shadow:inset 0 1px 3px rgba(0,0,0,.3);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .header-nav::-webkit-scrollbar{display:none;}
+  
+  .header-nav-btn{font-family:'Cinzel',serif;font-size:9px;font-weight:600;letter-spacing:.8px;padding:6px 10px;border:1px solid transparent;background:transparent;color:var(--text3);cursor:pointer;border-radius:8px;transition:all .2s cubic-bezier(0.4, 0, 0.2, 1);white-space:nowrap;flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;-webkit-tap-highlight-color:transparent;}
+  .header-nav-btn:hover{color:var(--text2);background:rgba(255,255,255,.06);}
+  .header-nav-btn:active{transform:scale(0.96);}
+  .header-nav-btn .nav-icon{font-size:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
+  .header-nav-btn.active-quran{background:linear-gradient(135deg,rgba(201,168,76,.22),rgba(201,168,76,.1));color:var(--gold2);border-color:rgba(201,168,76,.3);box-shadow:0 2px 10px rgba(201,168,76,.18),inset 0 1px 0 rgba(201,168,76,.2);}
+  .header-nav-btn.active-prononciation{background:linear-gradient(135deg,rgba(62,184,160,.22),rgba(62,184,160,.1));color:var(--teal2);border-color:rgba(62,184,160,.3);box-shadow:0 2px 10px rgba(62,184,160,.18),inset 0 1px 0 rgba(62,184,160,.2);}
+  .header-nav-btn.active-dashboard{background:linear-gradient(135deg,rgba(111,207,154,.22),rgba(111,207,154,.1));color:var(--green2);border-color:rgba(111,207,154,.3);box-shadow:0 2px 10px rgba(111,207,154,.18),inset 0 1px 0 rgba(111,207,154,.2);}
+  .header-nav-btn.active-concordance{background:linear-gradient(135deg,rgba(201,168,76,.22),rgba(201,168,76,.1));color:var(--gold2);border-color:rgba(201,168,76,.3);box-shadow:0 2px 10px rgba(201,168,76,.18),inset 0 1px 0 rgba(201,168,76,.2);}
+  .header-nav-btn.active-collections{background:linear-gradient(135deg,rgba(200,120,255,.22),rgba(200,120,255,.1));color:#c878ff;border-color:rgba(200,120,255,.3);box-shadow:0 2px 10px rgba(200,120,255,.18),inset 0 1px 0 rgba(200,120,255,.2);}
+  .header-nav-btn.active-revision{background:linear-gradient(135deg,rgba(86,212,188,.22),rgba(86,212,188,.1));color:var(--teal2);border-color:rgba(86,212,188,.3);box-shadow:0 2px 10px rgba(86,212,188,.18),inset 0 1px 0 rgba(86,212,188,.2);}
 
-  /* ── VOICE BUTTON ─────────────────────────────────────────────────── */
-  .voice-btn{width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;flex-shrink:0;}
-  .voice-btn:hover{border-color:rgba(201,168,76,.4);color:var(--gold2);background:rgba(201,168,76,.08);}
-  .voice-btn.listening{border-color:var(--red);color:var(--red);animation:pulse 1s ease-in-out infinite;background:rgba(224,90,90,.1);}
-  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,90,90,.4);}50%{box-shadow:0 0 0 8px rgba(224,90,90,0);}}
+  /* ── RIGHT ACTION BUTTONS & USER MENU ────────────────────────────── */
+  .header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;position:relative;}
+  .voice-btn{width:38px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s cubic-bezier(0.4, 0, 0.2, 1);flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+  .voice-btn:hover{border-color:rgba(201,168,76,.4);color:var(--gold2);background:rgba(201,168,76,.1);}
+  .voice-btn:active{transform:scale(0.94);}
+  .voice-btn.listening{border-color:var(--red);color:var(--red);animation:pulse 1.2s ease-in-out infinite;background:rgba(224,90,90,.14);}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,90,90,.45);}50%{box-shadow:0 0 0 8px rgba(224,90,90,0);}}
+
+  .header-user-btn{display:flex;align-items:center;justify-content:center;padding:2px;border-radius:50%;border:1.5px solid rgba(201,168,76,.35);background:transparent;cursor:pointer;transition:all .2s cubic-bezier(0.4, 0, 0.2, 1);flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+  .header-user-btn:hover,.header-user-btn.active{border-color:var(--gold2);box-shadow:0 0 12px rgba(201,168,76,.35);transform:scale(1.05);}
+  .header-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;}
+  .header-avatar-placeholder{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#c9a84c,#e8c96e);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#0c0e14;font-family:'Cinzel',serif;}
+
+  /* Dropdown User Menu */
+  .header-user-menu{position:absolute;top:calc(100% + 8px);right:0;width:250px;background:rgba(19,22,31,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(201,168,76,.25);border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.05);padding:8px;z-index:300;display:flex;flex-direction:column;gap:4px;animation:menuFadeIn .2s cubic-bezier(0.16, 1, 0.3, 1);}
+  @keyframes menuFadeIn{from{opacity:0;transform:translateY(-8px) scale(0.96);}to{opacity:1;transform:translateY(0) scale(1);}}
+  .user-menu-header{padding:8px 10px 10px 10px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:4px;}
+  .user-menu-name{font-family:'Cinzel',serif;font-size:11px;font-weight:600;color:var(--gold2);letter-spacing:.8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .user-menu-email{font-size:9.5px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .user-menu-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;border:none;background:transparent;color:var(--text);cursor:pointer;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.5px;transition:all .15s ease;text-align:left;width:100%;}
+  .user-menu-item:hover{background:rgba(201,168,76,.1);color:var(--gold2);}
+  .user-menu-item .menu-left{display:flex;align-items:center;gap:8px;}
+  .user-menu-badge{font-size:8px;padding:2px 6px;border-radius:6px;letter-spacing:.5px;}
+  .user-menu-badge.on{background:rgba(62,184,160,.2);color:var(--teal2);border:1px solid rgba(62,184,160,.4);}
+  .user-menu-badge.off{background:rgba(255,255,255,.05);color:var(--text3);}
+  .user-menu-item.logout{color:var(--red);border-top:1px solid rgba(255,255,255,.06);margin-top:4px;padding-top:10px;}
+  .user-menu-item.logout:hover{background:rgba(224,90,90,.1);color:#ff7b7b;}
 
   /* ── TOAST ────────────────────────────────────────────────────────── */
-  .voice-toast{position:fixed;top:66px;left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);padding:9px 18px;font-size:11px;letter-spacing:1px;color:var(--text2);z-index:500;display:flex;align-items:center;gap:10px;max-width:min(420px,90vw);box-shadow:0 8px 32px rgba(0,0,0,.4);}
+  .voice-toast{position:fixed;top:calc(var(--header-h) + 10px);left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);padding:9px 18px;font-size:11px;letter-spacing:1px;color:var(--text2);z-index:500;display:flex;align-items:center;gap:10px;max-width:min(420px,90vw);box-shadow:0 8px 32px rgba(0,0,0,.4);}
   .voice-toast.success{border-color:var(--teal);color:var(--teal);}
   .voice-toast.error{border-color:var(--red);color:var(--red);}
   .voice-toast .transcript{color:var(--gold2);font-style:italic;}
@@ -316,7 +348,7 @@ const CSS = `
   @keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.3;}}
 
   /* ── VOICE HELP ───────────────────────────────────────────────────── */
-  .voice-help{position:fixed;top:66px;right:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;z-index:400;max-width:260px;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+  .voice-help{position:fixed;top:calc(var(--header-h) + 10px);right:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;z-index:400;max-width:260px;box-shadow:0 8px 32px rgba(0,0,0,.4);}
   .voice-help-title{font-size:10px;letter-spacing:2px;color:var(--gold);margin-bottom:10px;}
   .voice-help-cmd{font-size:10px;letter-spacing:.5px;color:var(--text3);padding:3px 0;display:flex;gap:8px;align-items:baseline;}
   .voice-help-ex{color:var(--text2);font-size:10px;}
@@ -580,25 +612,6 @@ const CSS = `
   .ctrl-btn.play-btn{width:38px;height:38px;background:var(--gold);border-color:var(--gold);color:var(--bg);font-size:14px;}
   .ctrl-btn.play-btn:hover{background:var(--gold2);}
   .ctrl-btn.loop-on{border-color:var(--teal);color:var(--teal);background:rgba(62,184,160,.1);}
-  .reciter-trigger{gap:5px;padding:0 10px;width:auto;min-width:44px;font-family:'Cinzel',serif;font-size:10px;}
-  .reciter-trigger-label{max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .reciter-sheet-backdrop{position:fixed;inset:0;z-index:350;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);}
-  .reciter-sheet{position:fixed;z-index:351;right:16px;bottom:76px;width:min(420px,calc(100vw - 32px));max-height:min(640px,calc(100dvh - 100px));display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border2);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden;}
-  .reciter-sheet-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid var(--border);}
-  .reciter-sheet-title{font-family:'Cinzel',serif;font-size:12px;letter-spacing:2px;color:var(--gold2);}
-  .reciter-sheet-current{font-size:10px;color:var(--text3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .reciter-sheet-close{width:40px;height:40px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:20px;cursor:pointer;flex-shrink:0;}
-  .reciter-search{margin:12px 16px 8px;width:calc(100% - 32px);box-sizing:border-box;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:11px 12px;color:var(--text);font-size:16px;outline:none;}
-  .reciter-search:focus{border-color:var(--gold);}
-  .reciter-list{overflow-y:auto;padding:4px 12px 12px;overscroll-behavior:contain;}
-  .reciter-option{width:100%;min-height:52px;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;background:transparent;border:1px solid transparent;color:var(--text2);font-size:14px;text-align:left;cursor:pointer;}
-  .reciter-option.selected{background:rgba(201,168,76,.12);border-color:var(--gold);color:var(--gold2);}
-  .reciter-option-flag{font-size:20px;line-height:1;}
-  .reciter-option-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .reciter-option-check{font-size:16px;color:var(--gold2);}
-  .reciter-empty{padding:24px 12px;text-align:center;color:var(--text3);font-size:13px;}
-  .reciter-sheet-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--border);color:var(--text3);font-size:11px;}
-  .reciter-reset{min-height:36px;padding:0 10px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--text2);font-size:11px;cursor:pointer;}
   .player-progress{flex:1;display:flex;align-items:center;gap:8px;min-width:0;}
   .progress-bar-wrap{flex:1;height:3px;background:var(--border);border-radius:2px;position:relative;}
   .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--teal));border-radius:2px;transition:width .3s;}
@@ -1038,21 +1051,30 @@ const CSS = `
      RESPONSIVE — MOBILE  (≤ 640px)
   ══════════════════════════════════════════════════════════════════ */
   @media (max-width:640px) {
-    :root{ --sidebar-w:100vw; --player-h:56px; }
+    :root{ --sidebar-w:100vw; --header-h:calc(52px + env(safe-area-inset-top, 0px)); --player-h:56px; }
 
-    /* Header: single line on mobile */
-    .header{ padding:0 8px; height:48px; gap:5px; }
-    .header-menu-btn{ display:flex; width:34px; height:34px; font-size:15px; }
-    .header-logo-mobile{ font-size:12px; letter-spacing:1.5px; }
-    .header-nav{ padding:2px; gap:2px; }
-    .header-nav-btn{ padding:4px 6px; font-size:8px; letter-spacing:0; border-radius:6px; }
+    /* Header: Single compact fluid bar */
+    .header{ padding:max(env(safe-area-inset-top, 0px), 0px) 8px 0 8px; height:var(--header-h); gap:6px; }
+    .header-left{ gap:6px; }
+    .header-menu-btn{ width:36px; height:36px; font-size:15px; border-radius:8px; }
+    .header-logo{ font-size:13px; letter-spacing:1.5px; }
+    .header-logo .header-subtitle{ font-size:5.5px; letter-spacing:2px; }
+    
+    .header-nav{ padding:2px; gap:2px; border-radius:10px; flex:1; min-width:0; justify-content:space-around; }
+    .header-nav-btn{ padding:5px 6px; font-size:8px; letter-spacing:0; border-radius:7px; flex:1; min-width:0; }
     .header-nav-btn .nav-label{ display:none; }
-    .header-nav-btn .nav-icon{ display:inline; font-size:15px; }
-    .voice-btn{ width:30px; height:30px; font-size:13px; }
+    .header-nav-btn .nav-icon{ font-size:16px; margin:0; }
 
-    /* Sidebar becomes a full-screen drawer */
+    .header-actions{ gap:5px; }
+    .voice-btn{ width:36px; height:36px; font-size:14px; border-radius:8px; }
+    .desktop-only-action{ display:none !important; }
+    
+    .header-user-btn{ width:36px; height:36px; }
+    .header-avatar,.header-avatar-placeholder{ width:30px; height:30px; font-size:12px; }
+
+    /* Sidebar becomes a full-screen drawer aligned below header */
     .sidebar{
-      position:fixed; top:46px; left:0; bottom:0; z-index:300;
+      position:fixed; top:var(--header-h); left:0; bottom:0; z-index:300;
       width:var(--sidebar-w); transform:translateX(-100%);
       transition:transform .25s ease;
       box-shadow:4px 0 32px rgba(0,0,0,.5);
@@ -1089,12 +1111,6 @@ const CSS = `
     .player-row{ padding:6px 14px; gap:10px; }
     .ctrl-btn{ width:30px; height:30px; font-size:11px; }
     .ctrl-btn.play-btn{ width:36px; height:36px; font-size:13px; }
-    .reciter-trigger{position:fixed;right:12px;bottom:68px;z-index:201;min-height:44px;padding:0 14px;border-radius:22px;background:var(--surface2);box-shadow:0 6px 20px rgba(0,0,0,.35);}
-    .reciter-trigger-label{display:inline;max-width:120px;}
-    .reciter-sheet{right:0;bottom:0;width:100%;max-height:min(82dvh,680px);border-radius:18px 18px 0 0;}
-    .reciter-sheet-header{padding:18px 16px 14px;}
-    .reciter-list{padding-bottom:16px;}
-    .reciter-option{min-height:56px;font-size:16px;}
     .progress-text{ display:none; }
     .loop-bar{ padding:4px 14px 6px; gap:6px; }
     .loop-rep-wrap{ display:none; }
@@ -1109,19 +1125,26 @@ const CSS = `
     .recit-debug-table td,.recit-debug-table th{ padding:3px 4px; }
 
     /* Voice help full-width on mobile */
-    .voice-help{ right:8px; left:8px; max-width:none; }
+    .voice-help{ right:8px; left:8px; max-width:none; top:calc(var(--header-h) + 6px); }
   }
 
   /* ══════════════════════════════════════════════════════════════════
      RESPONSIVE — SMALL MOBILE  (≤ 400px)
   ══════════════════════════════════════════════════════════════════ */
   @media (max-width:400px) {
+    .header{ padding:max(env(safe-area-inset-top, 0px), 0px) 4px 0 4px; gap:3px; }
+    .header-menu-btn{ width:34px; height:34px; font-size:14px; }
+    .header-logo{ display:none; }
+    .header-nav-btn{ padding:4px 3px; }
+    .header-nav-btn .nav-icon{ font-size:15px; }
+    .voice-btn{ width:34px; height:34px; font-size:13px; }
+    .header-user-btn{ width:34px; height:34px; }
+    .header-avatar,.header-avatar-placeholder{ width:28px; height:28px; font-size:11px; }
     .ayat-arabic{ font-size:18px; }
     .recit-compare{ font-size:16px; }
     .surah-header-ornament{ font-size:18px; }
     .surah-header-bismillah{ font-size:14px !important; }
     .bismillah-line{ font-size:18px; }
-    .header-logo{ font-size:14px; }
   }
 
   /* ── COLLECTIONS PAGE ────────────────────────────────────────────── */
@@ -2948,6 +2971,30 @@ function AppInner({ currentUser, onSignOut }) {
   const enableAnimations     = useSelector(sel.enableAnimations);
   const enableHeavyCompute   = useSelector(sel.enableHeavyCompute);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const [showUserMenu, setShowUserMenu]         = useState(false);
+  const userMenuRef                             = useRef(null);
+
+  // Close user menu on outside click or page change
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setShowUserMenu(false);
+      }
+    };
+    if (showUserMenu) {
+      document.addEventListener("mousedown", handleOutside);
+      document.addEventListener("touchstart", handleOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+    };
+  }, [showUserMenu]);
+
+  useEffect(() => {
+    setShowUserMenu(false);
+  }, [activePage]);
+
   const loopActiveRef   = useRef(false);
   const loopStartRef    = useRef(0);
   const loopEndRef      = useRef(0);
@@ -3055,7 +3102,6 @@ function AppInner({ currentUser, onSignOut }) {
   const [showLangPanel,    setShowLangPanel]    = React.useState(false);
   const [recitatorId,      setRecitatorId]      = useState(() => { try { return localStorage.getItem('quran_recitator') || 'ar.alafasy'; } catch { return 'ar.alafasy'; } });
   const [showRecitPanel,   setShowRecitPanel]   = useState(false);
-  const [recitatorSearch,  setRecitatorSearch]  = useState("");
   // Bumped whenever a reciter's bitrate self-heals (markBitrateBad) so components
   // re-render and pick up the newly-known-good bitrate for that reciter.
   const [bitrateVersion,   setBitrateVersion]   = useState(0);
@@ -3090,10 +3136,6 @@ function AppInner({ currentUser, onSignOut }) {
 
   const bitrate   = getReciterBitrate(recitatorId); // eslint-disable-line react-hooks/exhaustive-deps
   const audioBase = `${AUDIO_CDN_ROOT}/${bitrate}/${recitatorId}`;
-  const activeRecitator = RECITATORS.find(r => r.id === recitatorId);
-  const visibleRecitators = RECITATORS.filter(r =>
-    r.label.toLowerCase().includes(recitatorSearch.trim().toLowerCase())
-  );
   const toggleQalqala      = () => dispatch(uiActions.toggleQalqala());
   const toggleMadd         = () => dispatch(uiActions.toggleMadd());
   const toggleIzhar        = () => dispatch(uiActions.toggleIzhar());
@@ -4102,95 +4144,184 @@ function AppInner({ currentUser, onSignOut }) {
       <StyleTag />
       <div className="app" onDrop={handleDrop} onDragOver={e => e.preventDefault()}>
         <header className="header">
-          {/* Hamburger — opens sourate list */}
-          <button className="header-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Menu sourates"
-            style={{ background: sidebarOpen ? "rgba(201,168,76,.15)" : undefined,
-              borderColor: sidebarOpen ? "rgba(201,168,76,.5)" : undefined,
-              color: sidebarOpen ? "var(--gold2)" : undefined }}>
-            ☰
-          </button>
+          {/* Left Branding / Hamburger group */}
+          <div className="header-left">
+            <button
+              className="header-menu-btn"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Menu sourates"
+              style={{
+                background: sidebarOpen ? "rgba(201,168,76,.18)" : undefined,
+                borderColor: sidebarOpen ? "rgba(201,168,76,.55)" : undefined,
+                color: sidebarOpen ? "var(--gold2)" : undefined,
+              }}
+            >
+              ☰
+            </button>
 
-          {/* Logo */}
-          <div className="header-logo header-logo-mobile" style={{ display:'flex', flexDirection:'column', alignItems:'center', lineHeight:1.1 }}>
-            <span>QUR<span>ÂN</span></span>
-            <span style={{ fontSize:6, letterSpacing:3, color:'var(--text3)', fontFamily:"'Cinzel',serif", opacity:.7 }}>STUDY</span>
+            <div className="header-logo" onClick={() => setActivePage('quran')} title="Accueil Coran">
+              <span>QUR<span className="logo-highlight">ÂN</span></span>
+              <span className="header-subtitle">STUDY</span>
+            </div>
           </div>
 
-          {/* Page nav tabs — icons only on mobile */}
-          <div className="header-nav">
+          {/* Page nav tabs — Segmented pill control */}
+          <nav className="header-nav" aria-label="Navigation principale">
             {[
-              {id:"quran",         icon:"📖", label:"CORAN"},
-              {id:"prononciation", icon:"🔤", label:"PRONON."},
-              {id:"dashboard",     icon:"📊", label:"DASH"},
-              {id:"collections",   icon:"🗂", label:"COLL."},
-              {id:"revision",      icon:"✏",  label:"RÉVISION"},
-            ].map(({id,icon,label}) => (
+              { id: "quran",         icon: "📖", label: "CORAN" },
+              { id: "prononciation", icon: "🔤", label: "PRONON." },
+              { id: "dashboard",     icon: "📊", label: "DASH" },
+              { id: "collections",   icon: "🗂", label: "COLL." },
+              { id: "revision",      icon: "✏",  label: "RÉVISION" },
+            ].map(({ id, icon, label }) => (
               <button
                 key={id}
-                className={`header-nav-btn${activePage===id?` active-${id}`:""}`}
+                className={`header-nav-btn${activePage === id ? ` active-${id}` : ""}`}
                 onClick={() => setActivePage(id)}
                 title={label}
               >
                 <span className="nav-icon">{icon}</span>
-                <span className="nav-label"> {label}</span>
+                <span className="nav-label">{label}</span>
               </button>
             ))}
-          </div>
+          </nav>
 
-          {/* Action buttons */}
-          <div style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0 }}>
-            {/* Arabic keyboard toggle */}
-            <button className="voice-btn"
-              onClick={() => setShowArabicKeyboard(v => { const next = !v; try { localStorage.setItem('quran_arabic_keyboard', next ? '1' : '0'); } catch {} return next; })}
-              title="Clavier arabe"
-              style={{ background: showArabicKeyboard ? 'rgba(62,184,160,.15)' : undefined,
+          {/* Right Action buttons & User Menu */}
+          <div className="header-actions" ref={userMenuRef}>
+            {/* Arabic keyboard toggle (desktop only) */}
+            <button
+              className="voice-btn desktop-only-action"
+              onClick={() => setShowArabicKeyboard(v => {
+                const next = !v;
+                try { localStorage.setItem('quran_arabic_keyboard', next ? '1' : '0'); } catch {}
+                return next;
+              })}
+              title={showArabicKeyboard ? "Masquer clavier arabe" : "Afficher clavier arabe"}
+              style={{
+                background: showArabicKeyboard ? 'rgba(62,184,160,.18)' : undefined,
                 borderColor: showArabicKeyboard ? 'var(--teal)' : undefined,
-                color: showArabicKeyboard ? 'var(--teal2)' : undefined }}>
-              ⌨️</button>
+                color: showArabicKeyboard ? 'var(--teal2)' : undefined,
+              }}
+            >
+              ⌨️
+            </button>
+
+            {/* Voice Command Mic */}
             <button
               className={`voice-btn${listening ? ' listening' : ''}`}
               onClick={toggleVoice}
-              title="Commande vocale"
-            >🎤</button>
+              title={listening ? "Arrêter écoute vocale" : "Commande vocale"}
+            >
+              🎤
+            </button>
+
+            {/* Rappel vocal (desktop only) */}
             <button
-              className="voice-btn"
+              className="voice-btn desktop-only-action"
               onClick={() => setShowRappel(v => !v)}
               title="Rappel vocal"
-              style={{ fontSize: 15 }}
-            >🔔</button>
-            {/* User avatar + sign-out */}
+              style={{
+                background: showRappel ? 'rgba(201,168,76,.18)' : undefined,
+                borderColor: showRappel ? 'rgba(201,168,76,.5)' : undefined,
+                color: showRappel ? 'var(--gold2)' : undefined,
+              }}
+            >
+              🔔
+            </button>
+
+            {/* User Avatar & Dropdown */}
             {currentUser && (
-              <div style={{ display:"flex", alignItems:"center", gap:6, marginLeft:4 }}>
-                <button onClick={() => setShowOptionsModal(true)} style={{
-                  background:"none", border:"1px solid var(--border2)",
-                  color:"var(--text3)", borderRadius:"50%", width:28, height:28,
-                  cursor:"pointer", fontSize:13, display:"flex", alignItems:"center",
-                  justifyContent:"center", flexShrink:0,
-                }}>⚙</button>
-                {currentUser.photoURL
-                  ? <img src={currentUser.photoURL} alt="avatar"
-                      style={{ width:28, height:28, borderRadius:"50%", border:"1px solid var(--border2)", objectFit:"cover" }} />
-                  : <div style={{
-                      width:28, height:28, borderRadius:"50%",
-                      background:"linear-gradient(135deg,var(--gold),var(--gold2))",
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      fontSize:11, fontWeight:700, color:"#0c0e14", flexShrink:0,
-                    }}>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className={`header-user-btn${showUserMenu ? ' active' : ''}`}
+                  onClick={() => setShowUserMenu(v => !v)}
+                  title={currentUser.displayName || currentUser.email || "Mon compte"}
+                  aria-expanded={showUserMenu}
+                >
+                  {currentUser.photoURL ? (
+                    <img src={currentUser.photoURL} alt="avatar" className="header-avatar" />
+                  ) : (
+                    <div className="header-avatar-placeholder">
                       {(currentUser.displayName || currentUser.email || "?")[0].toUpperCase()}
                     </div>
-                }
-                <button
-                  className="voice-btn"
-                  onClick={() => setShowOptionsModal(true)}
-                  title="Options"
-                  style={{ fontSize:13, padding:"4px 7px" }}
-                >⚙</button>
-                <button
-                  className="voice-btn"
-                  onClick={onSignOut}
-                  title="Se déconnecter"
-                  style={{ fontSize:13, padding:"4px 7px" }}
-                >⏏</button>
+                  )}
+                </button>
+
+                {/* Mobile / Desktop Dropdown Menu */}
+                {showUserMenu && (
+                  <div className="header-user-menu">
+                    <div className="user-menu-header">
+                      <div className="user-menu-name">
+                        {currentUser.displayName || "Utilisateur"}
+                      </div>
+                      <div className="user-menu-email">
+                        {currentUser.email || ""}
+                      </div>
+                    </div>
+
+                    <button
+                      className="user-menu-item"
+                      onClick={() => {
+                        setShowArabicKeyboard(v => {
+                          const next = !v;
+                          try { localStorage.setItem('quran_arabic_keyboard', next ? '1' : '0'); } catch {}
+                          return next;
+                        });
+                        setShowUserMenu(false);
+                      }}
+                    >
+                      <div className="menu-left">
+                        <span>⌨️</span>
+                        <span>Clavier Arabe</span>
+                      </div>
+                      <span className={`user-menu-badge ${showArabicKeyboard ? 'on' : 'off'}`}>
+                        {showArabicKeyboard ? 'ON' : 'OFF'}
+                      </span>
+                    </button>
+
+                    <button
+                      className="user-menu-item"
+                      onClick={() => {
+                        setShowRappel(v => !v);
+                        setShowUserMenu(false);
+                      }}
+                    >
+                      <div className="menu-left">
+                        <span>🔔</span>
+                        <span>Rappel Vocal</span>
+                      </div>
+                      <span className={`user-menu-badge ${showRappel ? 'on' : 'off'}`}>
+                        {showRappel ? 'ON' : 'OFF'}
+                      </span>
+                    </button>
+
+                    <button
+                      className="user-menu-item"
+                      onClick={() => {
+                        setShowOptionsModal(true);
+                        setShowUserMenu(false);
+                      }}
+                    >
+                      <div className="menu-left">
+                        <span>⚙</span>
+                        <span>Paramètres & Sync</span>
+                      </div>
+                    </button>
+
+                    <button
+                      className="user-menu-item logout"
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        onSignOut();
+                      }}
+                    >
+                      <div className="menu-left">
+                        <span>⏏</span>
+                        <span>Se déconnecter</span>
+                      </div>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -5430,55 +5561,58 @@ function AppInner({ currentUser, onSignOut }) {
                   style={{ fontSize: 14 }}>🎤</button>
                 {/* Reciter picker */}
                 <button
-                  className={`ctrl-btn reciter-trigger${showRecitPanel ? " loop-on" : ""}`}
-                  aria-haspopup="dialog"
-                  aria-expanded={showRecitPanel}
-                  aria-label={`Choisir le récitateur. Actuel : ${activeRecitator?.label || recitatorId}`}
-                  title={`Récitateur : ${activeRecitator?.label || recitatorId}`}
-                  onClick={() => { setRecitatorSearch(""); setShowRecitPanel(v => !v); }}>
-                  <span>{activeRecitator?.flag || '🎙️'}</span>
-                  <span className="reciter-trigger-label">{activeRecitator?.label || 'Récitateur'}</span>
+                  className={`ctrl-btn${showRecitPanel ? " loop-on" : ""}`}
+                  title={`Récitateur : ${RECITATORS.find(r => r.id === recitatorId)?.label || recitatorId}`}
+                  onClick={() => setShowRecitPanel(v => !v)}
+                  style={{ fontSize: 13 }}>
+                  {RECITATORS.find(r => r.id === recitatorId)?.flag || '🎙️'}
                 </button>
               </div>
 
-              {showRecitPanel && createPortal(
-                <>
-                  <div className="reciter-sheet-backdrop" onClick={() => setShowRecitPanel(false)} aria-hidden="true" />
-                  <section className="reciter-sheet" role="dialog" aria-modal="true" aria-labelledby="reciter-sheet-title">
-                    <div className="reciter-sheet-header">
-                      <div style={{ minWidth:0 }}>
-                        <div id="reciter-sheet-title" className="reciter-sheet-title">CHOISIR UN RÉCITATEUR</div>
-                        <div className="reciter-sheet-current">Actuel · {activeRecitator?.label || recitatorId}</div>
-                      </div>
-                      <button className="reciter-sheet-close" onClick={() => setShowRecitPanel(false)} aria-label="Fermer le choix du récitateur">×</button>
-                    </div>
-                    <input className="reciter-search" type="search" autoFocus value={recitatorSearch}
-                      onChange={e => setRecitatorSearch(e.target.value)} placeholder="Rechercher un récitateur" aria-label="Rechercher un récitateur" />
-                    <div className="reciter-list">
-                      {visibleRecitators.map(r => (
-                        <button key={r.id} className={`reciter-option${r.id === recitatorId ? ' selected' : ''}`} onClick={() => {
-                          const changed = r.id !== recitatorId;
-                          setRecitatorId(r.id);
-                          setShowRecitPanel(false);
-                          if (changed && mainAudioRef.current) {
-                            loadedAyatIdxRef.current = null;
-                            if (isMainPlaying) {
-                              mainAudioRef.current.load();
-                              mainAudioRef.current.play().catch(() => {});
-                              loadedAyatIdxRef.current = mainAyatIdx;
-                            }
-                          }
-                        }}>
-                          <span className="reciter-option-flag">{r.flag}</span>
-                          <span className="reciter-option-name">{r.label}</span>
-                          {r.id === recitatorId && <span className="reciter-option-check" aria-label="Sélectionné">✓</span>}
-                        </button>
-                      ))}
-                      {visibleRecitators.length === 0 && <div className="reciter-empty">Aucun récitateur ne correspond à cette recherche.</div>}
-                    </div>
-                    <div className="reciter-sheet-footer">
-                      <span>Débit audio · {bitrate} kbps</span>
-                      <button className="reciter-reset" onClick={() => {
+              {showRecitPanel && (
+                <div style={{ display:'flex', flexDirection:'column', gap:2, margin:'6px 14px 4px',
+                  padding:6, background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8,
+                  maxHeight:280, overflowY:'auto' }}>
+                  {RECITATORS.map(r => (
+                    <button key={r.id} onClick={() => {
+                      const changed = r.id !== recitatorId;
+                      setRecitatorId(r.id);
+                      setShowRecitPanel(false);
+                      if (changed && mainAudioRef.current) {
+                        // reload current ayat with the new reciter, preserving play/pause state
+                        loadedAyatIdxRef.current = null;
+                        if (isMainPlaying) {
+                          mainAudioRef.current.load();
+                          mainAudioRef.current.play().catch(() => {});
+                          loadedAyatIdxRef.current = mainAyatIdx;
+                        }
+                      }
+                    }} style={{
+                      display:'flex', alignItems:'center', gap:8, padding:'6px 10px', borderRadius:6,
+                      background: r.id === recitatorId ? 'rgba(201,168,76,.12)' : 'transparent',
+                      border: r.id === recitatorId ? '1px solid var(--gold)' : '1px solid transparent',
+                      color: r.id === recitatorId ? 'var(--gold2)' : 'var(--text2)',
+                      fontSize:11, fontFamily:"'Cinzel',serif", cursor:'pointer', textAlign:'left' }}>
+                      <span style={{ fontSize:14 }}>{r.flag}</span>
+                      <span>{r.label}</span>
+                      <span style={{ marginLeft:'auto', fontSize:8, color:'var(--text3)', fontFamily:"'Cinzel',serif" }}>
+                        {_officialBitrates[r.id]?.[0] ? `${_officialBitrates[r.id][0]}k` : '…'}
+                      </span>
+                      {r.id === recitatorId && <span>✓</span>}
+                    </button>
+                  ))}
+
+                  <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:6, paddingTop:6,
+                    borderTop:'1px solid var(--border)' }}>
+                    <span style={{ fontSize:8, letterSpacing:1, color:'var(--text3)', fontFamily:"'Cinzel',serif" }}>
+                      DÉBIT OFFICIEL
+                    </span>
+                    <span style={{ fontSize:10, fontFamily:"'Cinzel',serif", color:'var(--gold2)',
+                      background:'rgba(201,168,76,.1)', border:'1px solid var(--gold)', borderRadius:5,
+                      padding:'2px 8px' }}>{bitrate} kbps</span>
+                    <button
+                      title="Revenir au débit officiel par défaut de ce récitateur"
+                      onClick={() => {
                         setReciterBitrate(recitatorId, bitrateOrderFor(recitatorId)[0]);
                         setBitrateVersion(v => v + 1);
                         loadedAyatIdxRef.current = null;
@@ -5487,11 +5621,15 @@ function AppInner({ currentUser, onSignOut }) {
                           loadedAyatIdxRef.current = mainAyatIdx;
                           if (isMainPlaying) playWhenReady();
                         }
-                      }}>Réinitialiser le débit</button>
-                    </div>
-                  </section>
-                </>,
-                document.body
+                      }}
+                      style={{ marginLeft:'auto', fontSize:9, padding:'3px 8px', borderRadius:5,
+                        fontFamily:"'Cinzel',serif", cursor:'pointer', background:'transparent',
+                        border:'1px solid rgba(255,255,255,.15)', color:'var(--text3)' }}>↺</button>
+                  </div>
+                  <div style={{ fontSize:7, color:'var(--text3)', padding:'2px 2px 0', lineHeight:1.4 }}>
+                    Détecté via l'API officielle (audio/audioSecondary) ; ajusté si ce débit venait à ne plus être disponible.
+                  </div>
+                </div>
               )}
 
               {(() => {
@@ -9098,7 +9236,7 @@ function UnknownPickQuestion({ q, onAnswer }) {
             {result ? '✓ EXACT !' : '✗ PAS TOUT À FAIT'}
           </div>
           {!result && (
-              <div style={{ color:'var(--text3)', textAlign:'center', direction:'rtl',
+            <div style={{ fontSize:9, color:'var(--text3)', textAlign:'center', direction:'rtl',
               fontFamily:"'Amiri Quran',serif", fontSize:14 }}>
               {correctSet.size === 0
                 ? (q.toRevise ? 'Aucun mot marqué à réviser' : 'Aucun mot inconnu')
@@ -16742,11 +16880,11 @@ function LectureMode({ ayat, surahNum, audioUrl, isMainPlaying, timestamps, onLo
   };
 
   const captureStart = (wi, ci) => {
-    const ms = Math.round((audioRef.current?.currentTime ?? 0) * 1000);
+    const ms = Math.round(audioRef.current?.currentTime * 1000 ?? 0);
     setCharField(wi, ci, 'start', ms);
   };
   const captureEnd = (wi, ci) => {
-    const ms = Math.round((audioRef.current?.currentTime ?? 0) * 1000);
+    const ms = Math.round(audioRef.current?.currentTime * 1000 ?? 0);
     setCharField(wi, ci, 'end', ms);
   };
 
@@ -18195,8 +18333,8 @@ function CreatePartFromAudio({ ayat, timestamps, audioUrl, existingWordIndices, 
   const fmtMs = (ms) => ms == null ? "--:--.---"
     : `${String(Math.floor(ms / 60000)).padStart(2,"0")}:${String(Math.floor((ms % 60000) / 1000)).padStart(2,"0")}.${String(Math.floor(ms % 1000)).padStart(3,"0")}`;
 
-  const captureStart = () => setStartMs(Math.round((audioRef.current?.currentTime ?? 0) * 1000));
-  const captureEnd   = () => setEndMs(Math.round((audioRef.current?.currentTime ?? 0) * 1000));
+  const captureStart = () => setStartMs(Math.round(audioRef.current?.currentTime * 1000 ?? 0));
+  const captureEnd   = () => setEndMs(Math.round(audioRef.current?.currentTime * 1000 ?? 0));
 
   const canCreate = coveredIndices.length > 0;
 
