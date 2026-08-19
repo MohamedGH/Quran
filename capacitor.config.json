@@ -1,0 +1,16 @@
+{
+  "appId": "com.quranpath.app",
+  "appName": "quran-learning-app",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+
+  "plugins": {
+    "CapacitorAudioRecorder": {
+      "requestLegacyExternalStorage": true
+    },
+    "FirebaseAuthentication": {
+      "skipNativeAuth": false,
+      "providers": [ "google.com" ]
+    }
+  }
+}

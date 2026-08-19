@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Quran Path</string>
+    <string name="title_activity_main">Quran Path</string>
+    <string name="package_name">com.quranpath.app</string>
+    <string name="custom_url_scheme">com.quranpath.app</string>
+    <string name="default_web_client_id">1:744155115870:android:d6da82ef43e20fdb9c1fcf</string>
+
+</resources>
