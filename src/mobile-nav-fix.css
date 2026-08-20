@@ -1,0 +1,34 @@
+/* Mobile navigation fix: keep every route button visible and clickable. */
+@media (max-width: 640px) {
+  .header-nav {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: fixed !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: calc(var(--mobile-player, 56px) + 7px) !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 62px !important;
+    height: 62px !important;
+    z-index: 9999 !important;
+    transform: none !important;
+    overflow: visible !important;
+  }
+
+  .header-nav-btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+  }
+
+  .header-nav-btn .nav-icon,
+  .header-nav-btn .nav-label {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
