@@ -1,0 +1,504 @@
+/*
+ * QURÂN — Mobile-first visual layer
+ *
+ * This stylesheet intentionally leaves the existing desktop design untouched.
+ * It refines the <=640px experience: thumb-friendly controls, a bottom navigation
+ * dock, compact reading surfaces, safe-area support and cleaner page spacing.
+ */
+
+@media (max-width: 640px) {
+  :root {
+    --mobile-header: calc(52px + env(safe-area-inset-top, 0px));
+    --mobile-player: calc(56px + env(safe-area-inset-bottom, 0px));
+    --mobile-nav: 62px;
+    --mobile-gap: 10px;
+    --mobile-radius: 14px;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body {
+    font-size: 15px;
+    overscroll-behavior-x: none;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  button,
+  .surah-item,
+  .ayat-main,
+  .word-btn,
+  .mode-btn,
+  .submenu-tab,
+  .reciter-option,
+  .ctrl-btn {
+    touch-action: manipulation;
+  }
+
+  /* ─────────────────────────────────────────────
+     TOP BAR
+     ───────────────────────────────────────────── */
+  .header {
+    height: var(--mobile-header) !important;
+    min-height: var(--mobile-header);
+    padding: env(safe-area-inset-top, 0px) 10px 0 !important;
+    gap: 8px !important;
+    background: rgba(12, 14, 20, .94) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,.34) !important;
+  }
+
+  .header-left {
+    min-width: 0;
+    gap: 7px !important;
+  }
+
+  .header-menu-btn,
+  .voice-btn,
+  .header-user-btn {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px;
+    min-height: 38px;
+  }
+
+  .header-logo {
+    max-width: 86px;
+    font-size: 12px !important;
+    letter-spacing: 1.2px !important;
+    overflow: hidden;
+  }
+
+  .header-logo .header-subtitle {
+    display: none;
+  }
+
+  .header-nav {
+    position: fixed !important;
+    left: 8px;
+    right: 8px;
+    bottom: calc(var(--mobile-player) + 7px);
+    width: auto !important;
+    max-width: none !important;
+    height: var(--mobile-nav);
+    padding: 6px !important;
+    gap: 4px !important;
+    z-index: 210;
+    border: 1px solid rgba(201,168,76,.18) !important;
+    border-radius: 18px !important;
+    background: rgba(19,22,31,.94) !important;
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    box-shadow: 0 12px 32px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.04);
+  }
+
+  .header-nav-btn {
+    height: 100%;
+    min-height: 48px !important;
+    padding: 5px 3px !important;
+    flex: 1 !important;
+    flex-direction: column;
+    gap: 3px !important;
+    border-radius: 12px !important;
+    font-size: 7px !important;
+    letter-spacing: .4px !important;
+    color: var(--text3);
+  }
+
+  .header-nav-btn .nav-icon {
+    display: flex !important;
+    width: 28px;
+    height: 28px;
+    font-size: 18px !important;
+  }
+
+  .header-nav-btn .nav-label {
+    display: block !important;
+    line-height: 1;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-nav-btn.active-quran,
+  .header-nav-btn.active-prononciation,
+  .header-nav-btn.active-dashboard,
+  .header-nav-btn.active-concordance,
+  .header-nav-btn.active-collections,
+  .header-nav-btn.active-revision {
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 3px 12px rgba(0,0,0,.18) !important;
+  }
+
+  .header-actions {
+    gap: 5px !important;
+  }
+
+  .header-user-btn {
+    padding: 2px !important;
+  }
+
+  .header-avatar,
+  .header-avatar-placeholder {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  /* ─────────────────────────────────────────────
+     DRAWER
+     ───────────────────────────────────────────── */
+  .sidebar {
+    top: var(--mobile-header) !important;
+    width: min(92vw, 390px) !important;
+    border-right: 1px solid var(--border) !important;
+    border-radius: 0 18px 0 0;
+    box-shadow: 12px 0 40px rgba(0,0,0,.5) !important;
+  }
+
+  .sidebar-search {
+    padding: 12px !important;
+  }
+
+  .sidebar-search input {
+    min-height: 46px;
+    padding: 10px 13px !important;
+    border-radius: 12px !important;
+  }
+
+  .surah-item {
+    min-height: 58px;
+    padding: 10px 14px !important;
+  }
+
+  .surah-num {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  /* ─────────────────────────────────────────────
+     CONTENT / READING
+     ───────────────────────────────────────────── */
+  .body {
+    min-height: 0;
+  }
+
+  .main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .surah-header {
+    padding: 10px 12px !important;
+    background: linear-gradient(180deg, var(--surface), rgba(12,14,20,.96)) !important;
+  }
+
+  .surah-header-ornament {
+    font-size: 23px !important;
+  }
+
+  .surah-header-title {
+    font-size: 8px !important;
+    letter-spacing: 1.5px !important;
+  }
+
+  .surah-header-sub {
+    font-size: 8px !important;
+    letter-spacing: 1px !important;
+  }
+
+  .bismillah-line {
+    padding: 10px 12px !important;
+    font-size: 22px !important;
+  }
+
+  .ayat-main {
+    margin: 7px 8px;
+    padding: 13px 12px !important;
+    gap: 9px !important;
+    border: 1px solid rgba(255,255,255,.045);
+    border-radius: var(--mobile-radius);
+    background: rgba(19,22,31,.42);
+  }
+
+  .ayat-main:hover {
+    background: rgba(255,255,255,.025);
+  }
+
+  .ayat-number-badge {
+    width: 30px !important;
+    height: 30px !important;
+    margin-top: 3px;
+  }
+
+  .ayat-arabic {
+    font-size: clamp(22px, 6.1vw, 27px) !important;
+    line-height: 2.05 !important;
+    letter-spacing: 0 !important;
+  }
+
+  .ayat-learned-badge {
+    padding: 3px 7px !important;
+  }
+
+  .submenu {
+    padding: 10px 10px 14px !important;
+  }
+
+  .submenu-header,
+  .submenu-tabs {
+    margin-left: -2px;
+    margin-right: -2px;
+    padding-bottom: 2px;
+  }
+
+  .mode-btn,
+  .submenu-tab {
+    min-height: 44px;
+    padding: 9px 13px !important;
+  }
+
+  .words-area {
+    gap: 7px !important;
+  }
+
+  .word-btn {
+    min-height: 42px;
+    padding: 5px 9px !important;
+  }
+
+  /* ─────────────────────────────────────────────
+     AUDIO PLAYER
+     ───────────────────────────────────────────── */
+  .main-player {
+    z-index: 205 !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .player-row {
+    height: var(--mobile-player) !important;
+    min-height: var(--mobile-player);
+    padding: 6px 10px !important;
+    gap: 7px !important;
+  }
+
+  .player-controls {
+    gap: 4px !important;
+    flex-shrink: 0;
+  }
+
+  .ctrl-btn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px;
+    min-height: 34px;
+  }
+
+  .ctrl-btn.play-btn {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .player-progress {
+    min-width: 52px;
+  }
+
+  .progress-bar-wrap {
+    height: 4px !important;
+  }
+
+  .loop-bar {
+    padding: 5px 10px 7px !important;
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none;
+  }
+
+  .loop-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .reciter-trigger {
+    right: 10px !important;
+    bottom: calc(var(--mobile-player) + var(--mobile-nav) + 15px) !important;
+    min-height: 42px !important;
+    max-width: min(58vw, 210px);
+    padding: 0 13px !important;
+    border-radius: 21px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,.38) !important;
+  }
+
+  .reciter-trigger-label {
+    max-width: 125px !important;
+  }
+
+  /* Reciter sheet remains fully functional, but feels native on phones. */
+  .reciter-sheet {
+    width: 100% !important;
+    max-height: min(86dvh, 720px) !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-bottom: 0 !important;
+  }
+
+  .reciter-sheet::before {
+    content: '';
+    width: 42px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--border2);
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .reciter-sheet-header {
+    padding: 20px 14px 12px !important;
+  }
+
+  .reciter-search {
+    min-height: 46px;
+    margin: 10px 12px 8px !important;
+    width: calc(100% - 24px) !important;
+    border-radius: 12px !important;
+  }
+
+  .reciter-option {
+    min-height: 54px !important;
+    border-radius: 12px !important;
+  }
+
+  /* ─────────────────────────────────────────────
+     OTHER PAGES
+     ───────────────────────────────────────────── */
+  .dash-page,
+  .rev-page,
+  .concord-page,
+  .collections-page,
+  .qbook-page-content {
+    padding: 14px 10px calc(var(--mobile-nav) + var(--mobile-player) + 26px) !important;
+  }
+
+  .dash-page,
+  .rev-page {
+    gap: 14px !important;
+  }
+
+  .dash-kpi-row {
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .dash-kpi {
+    padding: 14px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .dash-kpi-val {
+    font-size: 23px !important;
+  }
+
+  .dash-two-col {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .dash-card {
+    padding: 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .rev-stats-row,
+  .rev-filter-row {
+    gap: 7px !important;
+  }
+
+  .rev-stat-pill {
+    flex: 1 1 calc(50% - 7px);
+    min-width: 0;
+  }
+
+  .rev-surah-header {
+    min-height: 58px;
+    padding: 10px 12px !important;
+  }
+
+  .rev-ayat-grid {
+    padding: 0 9px 10px !important;
+  }
+
+  .rev-ayat-arabic {
+    font-size: 22px !important;
+    line-height: 1.95 !important;
+  }
+
+  /* ─────────────────────────────────────────────
+     FORMS / MODALS / ACCESSIBILITY
+     ───────────────────────────────────────────── */
+  .btn-primary,
+  .btn-small,
+  .reciter-reset,
+  .reciter-sheet-close {
+    min-height: 40px;
+  }
+
+  .voice-help {
+    left: 8px !important;
+    right: 8px !important;
+    max-width: none !important;
+    border-radius: 14px !important;
+  }
+
+  .voice-toast {
+    top: calc(var(--mobile-header) + 8px) !important;
+    max-width: calc(100vw - 20px) !important;
+    width: max-content;
+  }
+
+  @supports (padding: max(0px)) {
+    .main,
+    .page-anim {
+      padding-bottom: max(0px, env(safe-area-inset-bottom, 0px));
+    }
+  }
+}
+
+@media (max-width: 380px) {
+  .header-logo {
+    max-width: 70px;
+  }
+
+  .header-nav-btn .nav-icon {
+    font-size: 17px !important;
+  }
+
+  .header-nav-btn {
+    font-size: 6.5px !important;
+  }
+
+  .ayat-main {
+    margin-left: 5px;
+    margin-right: 5px;
+  }
+
+  .ayat-arabic {
+    font-size: 21px !important;
+  }
+
+  .player-info {
+    display: none !important;
+  }
+
+  .reciter-trigger-label {
+    max-width: 95px !important;
+  }
+}
