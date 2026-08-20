@@ -1,202 +1,110 @@
 /* QURÂN — responsive mobile-first layer
  * Breakpoints: 1200 / 900 / 700 / 480 / 380px.
- * Desktop remains unchanged unless a breakpoint below applies.
  */
 
-.header-logo::after {
-  content: "e33af11";
-  margin-left: 8px;
-  padding: 2px 5px;
-  border: 1px solid rgba(201,168,76,.28);
-  border-radius: 5px;
-  color: var(--text3);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 9px;
-  line-height: 1;
-  vertical-align: middle;
-  opacity: .8;
+/* Header displays the parent commit: 28ee859. */
+.header-logo::after { content:"28ee859"; margin-left:8px; padding:2px 5px; border:1px solid rgba(201,168,76,.28); border-radius:5px; color:var(--text3); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:9px; line-height:1; vertical-align:middle; opacity:.8; }
+
+@media (max-width:1200px) {
+  .header { padding-left:14px !important; padding-right:14px !important; gap:12px !important; }
+  .header-nav { gap:3px !important; }
+  .header-nav-btn { padding-left:8px !important; padding-right:8px !important; }
+  .main { min-width:0 !important; }
+  .ayat-main { max-width:100% !important; }
+  .sidebar { width:min(300px,30vw) !important; }
+  .dash-two-col { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 
-/* ─────────────── ≤ 1200px : compact desktop / landscape tablet ─────────────── */
-@media (max-width: 1200px) {
-  .header { padding-left: 14px !important; padding-right: 14px !important; gap: 12px !important; }
-  .header-nav { gap: 3px !important; }
-  .header-nav-btn { padding-left: 8px !important; padding-right: 8px !important; }
-  .main { min-width: 0 !important; }
-  .ayat-main { max-width: 100% !important; }
-  .sidebar { width: min(300px, 30vw) !important; }
-  .dash-two-col { grid-template-columns: repeat(2, minmax(0,1fr)); }
+@media (max-width:900px) {
+  :root { --mobile-player:calc(58px + env(safe-area-inset-bottom,0px)); --mobile-nav:60px; --mobile-radius:13px; }
+  html,body,#root { width:100%; min-width:0; }
+  body { font-size:15px; overscroll-behavior-x:none; }
+  button,input,select,textarea { font-size:16px; }
+  .header { min-width:0 !important; gap:8px !important; }
+  .header-logo { min-width:0; }
+  .header-nav { gap:2px !important; }
+  .header-nav-btn { min-width:0 !important; }
+  .header-nav-btn .nav-label { white-space:nowrap; }
+  .sidebar { width:min(340px,44vw) !important; }
+  .main { width:100% !important; min-width:0 !important; }
+  .ayat-main { margin-left:8px; margin-right:8px; }
+  .ayat-arabic { font-size:clamp(23px,3.2vw,30px) !important; }
+  .dash-two-col { grid-template-columns:1fr !important; }
+  .dash-kpi-row { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
 }
 
-/* ─────────────── ≤ 900px : tablet ─────────────── */
-@media (max-width: 900px) {
-  :root {
-    --mobile-player: calc(58px + env(safe-area-inset-bottom, 0px));
-    --mobile-nav: 60px;
-    --mobile-radius: 13px;
-  }
-
-  html, body, #root { width: 100%; min-width: 0; }
-  body { font-size: 15px; overscroll-behavior-x: none; }
-  button, input, select, textarea { font-size: 16px; }
-
-  .header { min-width: 0 !important; gap: 8px !important; }
-  .header-logo { min-width: 0; }
-  .header-nav { gap: 2px !important; }
-  .header-nav-btn { min-width: 0 !important; }
-  .header-nav-btn .nav-label { white-space: nowrap; }
-
-  .sidebar { width: min(340px, 44vw) !important; }
-  .main { width: 100% !important; min-width: 0 !important; }
-  .ayat-main { margin-left: 8px; margin-right: 8px; }
-  .ayat-arabic { font-size: clamp(23px, 3.2vw, 30px) !important; }
-  .dash-two-col { grid-template-columns: 1fr !important; }
-  .dash-kpi-row { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+@media (max-width:700px) {
+  :root { --mobile-header:calc(56px + env(safe-area-inset-top,0px)); --mobile-player:calc(58px + env(safe-area-inset-bottom,0px)); --mobile-nav:62px; --mobile-radius:14px; }
+  .header { height:auto !important; min-height:var(--mobile-header) !important; display:grid !important; grid-template-columns:minmax(0,1fr) auto !important; grid-template-areas:"left actions" "nav nav" !important; align-items:center !important; padding:env(safe-area-inset-top,0px) 10px 0 !important; gap:2px 8px !important; overflow:visible !important; }
+  .header-left { grid-area:left !important; min-width:0 !important; gap:7px !important; }
+  .header-actions { grid-area:actions !important; display:flex !important; gap:5px !important; min-width:0 !important; }
+  .header-menu-btn,.voice-btn,.header-user-btn { width:38px !important; height:38px !important; min-width:38px !important; min-height:38px !important; }
+  .header-logo { max-width:none !important; font-size:12px !important; letter-spacing:1.2px !important; white-space:nowrap; overflow:visible !important; }
+  .header-logo .header-subtitle { display:none !important; }
+  .header-logo::after { margin-left:5px; padding:2px 4px; font-size:8px; }
+  .header-nav { grid-area:nav !important; position:static !important; display:flex !important; visibility:visible !important; opacity:1 !important; width:100% !important; height:58px !important; min-width:0 !important; max-width:none !important; margin:0 !important; padding:4px 0 !important; gap:3px !important; border:0 !important; border-top:1px solid rgba(201,168,76,.16) !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; overflow:hidden !important; z-index:20 !important; pointer-events:auto !important; }
+  .header-nav-btn { display:flex !important; flex:1 1 0 !important; width:auto !important; min-width:0 !important; max-width:none !important; height:50px !important; min-height:50px !important; padding:4px 2px !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:2px !important; border-radius:11px !important; font-size:8px !important; letter-spacing:.3px !important; pointer-events:auto !important; }
+  .header-nav-btn .nav-icon { display:flex !important; align-items:center; justify-content:center; width:26px; height:24px; font-size:17px !important; line-height:1; }
+  .header-nav-btn .nav-label { display:block !important; max-width:100%; overflow:hidden; text-overflow:ellipsis; line-height:11px; white-space:nowrap; }
+  .sidebar { top:var(--mobile-header) !important; width:min(92vw,390px) !important; }
+  .sidebar-search { padding:12px !important; }
+  .sidebar-search input { min-height:46px; padding:10px 13px !important; border-radius:12px !important; }
+  .surah-item { min-height:58px; padding:10px 14px !important; }
+  .surah-num { width:34px !important; height:34px !important; }
+  .body { min-height:0 !important; }
+  .main { width:100% !important; min-width:0 !important; }
+  .surah-header { padding:10px 12px !important; }
+  .surah-header-ornament { font-size:23px !important; }
+  .surah-header-title,.surah-header-sub { font-size:8px !important; letter-spacing:1px !important; }
+  .bismillah-line { padding:10px 12px !important; font-size:22px !important; }
+  .ayat-main { margin:7px 8px; padding:13px 12px !important; gap:9px !important; border-radius:var(--mobile-radius); }
+  .ayat-number-badge { width:30px !important; height:30px !important; margin-top:3px; }
+  .ayat-arabic { font-size:clamp(22px,6.1vw,27px) !important; line-height:2.05 !important; }
+  .submenu { padding:10px 10px 14px !important; }
+  .mode-btn,.submenu-tab { min-height:44px; padding:9px 13px !important; }
+  .words-area { gap:7px !important; }
+  .word-btn { min-height:42px; padding:5px 9px !important; }
+  .main-player { z-index:205 !important; padding-bottom:env(safe-area-inset-bottom,0px); }
+  .player-row { height:var(--mobile-player) !important; min-height:var(--mobile-player); padding:6px 10px !important; gap:7px !important; }
+  .ctrl-btn { width:34px !important; height:34px !important; min-width:34px !important; min-height:34px !important; }
+  .ctrl-btn.play-btn { width:40px !important; height:40px !important; min-width:40px !important; min-height:40px !important; }
+  .reciter-trigger { right:10px !important; bottom:calc(var(--mobile-player) + 12px) !important; min-height:42px !important; max-width:58vw; padding:0 13px !important; border-radius:21px !important; }
+  .reciter-sheet { width:100% !important; max-height:86dvh !important; border-radius:20px 20px 0 0 !important; }
+  .reciter-sheet-header { padding:20px 14px 12px !important; }
+  .reciter-search { min-height:46px; margin:10px 12px 8px !important; width:calc(100% - 24px) !important; }
+  .reciter-option { min-height:54px !important; }
+  .dash-page,.rev-page,.concord-page,.collections-page,.qbook-page-content { padding:14px 10px 26px !important; }
+  .dash-kpi-row { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:8px !important; }
+  .dash-kpi { padding:14px 12px !important; }
+  .dash-two-col { grid-template-columns:1fr !important; gap:12px !important; }
+  .rev-stat-pill { flex:1 1 calc(50% - 7px); min-width:0; }
+  .rev-ayat-grid { padding:0 9px 10px !important; }
+  .rev-ayat-arabic { font-size:22px !important; line-height:1.95 !important; }
+  .voice-help { left:8px !important; right:8px !important; max-width:none !important; }
+  .voice-toast { top:calc(var(--mobile-header) + 8px) !important; max-width:calc(100vw - 20px) !important; }
 }
 
-/* ─────────────── ≤ 700px : mobile ─────────────── */
-@media (max-width: 700px) {
-  :root {
-    --mobile-header: calc(56px + env(safe-area-inset-top, 0px));
-    --mobile-player: calc(58px + env(safe-area-inset-bottom, 0px));
-    --mobile-nav: 62px;
-    --mobile-gap: 10px;
-    --mobile-radius: 14px;
-  }
-
-  .header {
-    height: auto !important;
-    min-height: var(--mobile-header) !important;
-    display: grid !important;
-    grid-template-columns: minmax(0,1fr) auto !important;
-    grid-template-areas: "left actions" "nav nav" !important;
-    align-items: center !important;
-    padding: env(safe-area-inset-top,0px) 10px 0 !important;
-    gap: 2px 8px !important;
-    overflow: visible !important;
-    background: rgba(12,14,20,.96) !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,.34) !important;
-  }
-
-  .header-left { grid-area: left !important; min-width: 0 !important; gap: 7px !important; }
-  .header-actions { grid-area: actions !important; display: flex !important; gap: 5px !important; min-width: 0 !important; }
-  .header-menu-btn, .voice-btn, .header-user-btn { width: 38px !important; height: 38px !important; min-width: 38px !important; min-height: 38px !important; }
-  .header-logo { max-width: none !important; font-size: 12px !important; letter-spacing: 1.2px !important; white-space: nowrap; overflow: visible !important; }
-  .header-logo .header-subtitle { display: none !important; }
-  .header-logo::after { margin-left: 5px; padding: 2px 4px; font-size: 8px; }
-
-  /* Route buttons stay in the header, but occupy their own full-width row. */
-  .header-nav {
-    grid-area: nav !important;
-    position: static !important;
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    width: 100% !important;
-    height: 58px !important;
-    min-width: 0 !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 4px 0 !important;
-    gap: 3px !important;
-    border: 0 !important;
-    border-top: 1px solid rgba(201,168,76,.16) !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    overflow: hidden !important;
-    z-index: 20 !important;
-    pointer-events: auto !important;
-  }
-
-  .header-nav-btn {
-    display: flex !important;
-    flex: 1 1 0 !important;
-    width: auto !important;
-    min-width: 0 !important;
-    height: 50px !important;
-    min-height: 50px !important;
-    padding: 4px 2px !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 2px !important;
-    border-radius: 11px !important;
-    font-size: 8px !important;
-    letter-spacing: .3px !important;
-    pointer-events: auto !important;
-  }
-  .header-nav-btn .nav-icon { display: flex !important; align-items: center; justify-content: center; width: 26px; height: 24px; font-size: 17px !important; line-height: 1; }
-  .header-nav-btn .nav-label { display: block !important; max-width: 100%; overflow: hidden; text-overflow: ellipsis; line-height: 11px; white-space: nowrap; }
-
-  .sidebar { top: var(--mobile-header) !important; width: min(92vw,390px) !important; }
-  .sidebar-search { padding: 12px !important; }
-  .sidebar-search input { min-height: 46px; padding: 10px 13px !important; border-radius: 12px !important; }
-  .surah-item { min-height: 58px; padding: 10px 14px !important; }
-  .surah-num { width: 34px !important; height: 34px !important; }
-
-  .body { min-height: 0 !important; }
-  .main { width: 100% !important; min-width: 0 !important; }
-  .surah-header { padding: 10px 12px !important; }
-  .surah-header-ornament { font-size: 23px !important; }
-  .surah-header-title, .surah-header-sub { font-size: 8px !important; letter-spacing: 1px !important; }
-  .bismillah-line { padding: 10px 12px !important; font-size: 22px !important; }
-
-  .ayat-main { margin: 7px 8px; padding: 13px 12px !important; gap: 9px !important; border-radius: var(--mobile-radius); }
-  .ayat-number-badge { width: 30px !important; height: 30px !important; margin-top: 3px; }
-  .ayat-arabic { font-size: clamp(22px,6.1vw,27px) !important; line-height: 2.05 !important; }
-  .submenu { padding: 10px 10px 14px !important; }
-  .mode-btn, .submenu-tab { min-height: 44px; padding: 9px 13px !important; }
-  .words-area { gap: 7px !important; }
-  .word-btn { min-height: 42px; padding: 5px 9px !important; }
-
-  .main-player { z-index: 205 !important; padding-bottom: env(safe-area-inset-bottom,0px); }
-  .player-row { height: var(--mobile-player) !important; min-height: var(--mobile-player); padding: 6px 10px !important; gap: 7px !important; }
-  .ctrl-btn { width: 34px !important; height: 34px !important; min-width: 34px !important; min-height: 34px !important; }
-  .ctrl-btn.play-btn { width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important; }
-
-  .reciter-trigger { right: 10px !important; bottom: calc(var(--mobile-player) + 12px) !important; min-height: 42px !important; max-width: 58vw; padding: 0 13px !important; border-radius: 21px !important; }
-  .reciter-trigger-label { max-width: 125px !important; }
-  .reciter-sheet { width: 100% !important; max-height: 86dvh !important; border-radius: 20px 20px 0 0 !important; }
-  .reciter-sheet-header { padding: 20px 14px 12px !important; }
-  .reciter-search { min-height: 46px; margin: 10px 12px 8px !important; width: calc(100% - 24px) !important; }
-  .reciter-option { min-height: 54px !important; }
-
-  .dash-page, .rev-page, .concord-page, .collections-page, .qbook-page-content { padding: 14px 10px 26px !important; }
-  .dash-kpi-row { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 8px !important; }
-  .dash-kpi { padding: 14px 12px !important; }
-  .dash-two-col { grid-template-columns: 1fr !important; gap: 12px !important; }
-  .rev-stat-pill { flex: 1 1 calc(50% - 7px); min-width: 0; }
-  .rev-ayat-grid { padding: 0 9px 10px !important; }
-  .rev-ayat-arabic { font-size: 22px !important; line-height: 1.95 !important; }
-  .voice-help { left: 8px !important; right: 8px !important; max-width: none !important; }
-  .voice-toast { top: calc(var(--mobile-header) + 8px) !important; max-width: calc(100vw - 20px) !important; }
+@media (max-width:480px) {
+  .header { padding-left:7px !important; padding-right:7px !important; gap:1px 5px !important; }
+  .header-menu-btn,.voice-btn,.header-user-btn { width:36px !important; height:36px !important; min-width:36px !important; min-height:36px !important; }
+  .header-nav { height:56px !important; padding:3px 0 !important; gap:1px !important; }
+  .header-nav-btn { height:50px !important; min-height:50px !important; font-size:7px !important; }
+  .header-nav-btn .nav-icon { width:24px; height:22px; font-size:16px !important; }
+  .ayat-main { margin-left:5px; margin-right:5px; padding-left:10px !important; padding-right:10px !important; }
+  .ayat-arabic { font-size:21px !important; }
+  .player-info { display:none !important; }
+  .reciter-trigger-label { max-width:105px !important; }
 }
 
-/* ─────────────── ≤ 480px : phone ─────────────── */
-@media (max-width: 480px) {
-  .header { padding-left: 7px !important; padding-right: 7px !important; gap: 1px 5px !important; }
-  .header-menu-btn, .voice-btn, .header-user-btn { width: 36px !important; height: 36px !important; min-width: 36px !important; min-height: 36px !important; }
-  .header-nav { height: 56px !important; padding: 3px 0 !important; gap: 1px !important; }
-  .header-nav-btn { height: 50px !important; min-height: 50px !important; font-size: 7px !important; }
-  .header-nav-btn .nav-icon { width: 24px; height: 22px; font-size: 16px !important; }
-  .ayat-main { margin-left: 5px; margin-right: 5px; padding-left: 10px !important; padding-right: 10px !important; }
-  .ayat-arabic { font-size: 21px !important; }
-  .player-info { display: none !important; }
-  .reciter-trigger-label { max-width: 105px !important; }
-  .dash-kpi-row { grid-template-columns: 1fr 1fr !important; }
-}
-
-/* ─────────────── ≤ 380px : very small phone ─────────────── */
-@media (max-width: 380px) {
-  .header-logo { font-size: 11px !important; letter-spacing: 1px !important; }
-  .header-logo::after { margin-left: 3px; padding: 1px 3px; font-size: 7px; }
-  .header-menu-btn, .voice-btn, .header-user-btn { width: 34px !important; height: 34px !important; min-width: 34px !important; min-height: 34px !important; }
-  .header-nav-btn { font-size: 6.5px !important; }
-  .header-nav-btn .nav-icon { font-size: 15px !important; }
-  .header-nav-btn .nav-label { max-width: 55px; }
-  .ayat-arabic { font-size: 20px !important; }
-  .ctrl-btn { width: 32px !important; height: 32px !important; min-width: 32px !important; min-height: 32px !important; }
-  .ctrl-btn.play-btn { width: 37px !important; height: 37px !important; min-width: 37px !important; min-height: 37px !important; }
-  .reciter-trigger-label { max-width: 90px !important; }
+@media (max-width:380px) {
+  .header-logo { font-size:11px !important; letter-spacing:1px !important; }
+  .header-logo::after { margin-left:3px; padding:1px 3px; font-size:7px; }
+  .header-menu-btn,.voice-btn,.header-user-btn { width:34px !important; height:34px !important; min-width:34px !important; min-height:34px !important; }
+  .header-nav-btn { font-size:6.5px !important; }
+  .header-nav-btn .nav-icon { font-size:15px !important; }
+  .header-nav-btn .nav-label { max-width:55px; }
+  .ayat-arabic { font-size:20px !important; }
+  .ctrl-btn { width:32px !important; height:32px !important; min-width:32px !important; min-height:32px !important; }
+  .ctrl-btn.play-btn { width:37px !important; height:37px !important; min-width:37px !important; min-height:37px !important; }
+  .reciter-trigger-label { max-width:90px !important; }
 }
