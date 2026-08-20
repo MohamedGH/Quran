@@ -59,6 +59,91 @@
     pointer-events: auto !important;
     z-index: 2147483646 !important;
   }
+
+  /* Audio player: occupies the strip immediately below the content and
+     immediately above the mobile navigation. No negative bottom/top hacks. */
+  .main-player {
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 2147483645 !important;
+  }
+
+  .player-row {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: var(--mobile-player) !important;
+    min-height: var(--mobile-player) !important;
+    padding: 5px 8px !important;
+    gap: 7px !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: hidden !important;
+  }
+
+  .player-info {
+    flex: 0 1 92px !important;
+    min-width: 62px !important;
+    max-width: 100px !important;
+    overflow: hidden !important;
+  }
+
+  .player-controls {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .player-progress {
+    flex: 1 1 auto !important;
+    min-width: 28px !important;
+  }
+
+  .ctrl-btn {
+    width: 29px !important;
+    height: 29px !important;
+    min-width: 29px !important;
+    font-size: 10px !important;
+  }
+
+  .ctrl-btn.play-btn {
+    width: 35px !important;
+    height: 35px !important;
+    min-width: 35px !important;
+    font-size: 12px !important;
+  }
+
+  /* Keep the reciter button in the same player row. */
+  .reciter-trigger {
+    position: static !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: auto !important;
+    min-height: 29px !important;
+    width: auto !important;
+    min-width: 34px !important;
+    max-width: 92px !important;
+    padding: 0 7px !important;
+    border-radius: 16px !important;
+    flex: 0 1 auto !important;
+  }
+
+  .reciter-trigger-label {
+    display: inline-block !important;
+    max-width: 54px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .progress-text {
+    font-size: 7px !important;
+    letter-spacing: .5px !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -67,5 +152,43 @@
     min-height: 58px !important;
     padding: 3px 4px !important;
     gap: 2px !important;
+  }
+
+  .player-row {
+    padding: 4px 5px !important;
+    gap: 4px !important;
+  }
+
+  .player-info {
+    flex: 0 1 66px !important;
+    min-width: 48px !important;
+    max-width: 72px !important;
+  }
+
+  .player-controls {
+    gap: 2px !important;
+  }
+
+  .ctrl-btn {
+    width: 27px !important;
+    height: 27px !important;
+    min-width: 27px !important;
+    font-size: 9px !important;
+  }
+
+  .ctrl-btn.play-btn {
+    width: 33px !important;
+    height: 33px !important;
+    min-width: 33px !important;
+  }
+
+  .reciter-trigger {
+    min-width: 30px !important;
+    max-width: 70px !important;
+    padding: 0 5px !important;
+  }
+
+  .reciter-trigger-label {
+    max-width: 38px !important;
   }
 }
