@@ -1,0 +1,168 @@
+/* QURÂN STUDY — mobile shell layout
+ *
+ * Mobile target:
+ *   ┌─────────────────────────────┐
+ *   │ ☰ QURÂN               🎤 👤 │  fixed header
+ *   ├─────────────────────────────┤
+ *   │                             │
+ *   │           CONTENT           │
+ *   │                             │
+ *   ├─────────────────────────────┤
+ *   │          PLAYER-ROW         │  fixed player
+ *   ├─────────────────────────────┤
+ *   │  📖   🔤   📊   🗂   ✏     │  fixed routes
+ *   └─────────────────────────────┘
+ */
+
+@media (max-width: 700px) {
+  :root {
+    --mobile-header: calc(56px + env(safe-area-inset-top, 0px));
+    --mobile-player: calc(58px + env(safe-area-inset-bottom, 0px));
+    --mobile-nav: 58px;
+  }
+
+  /* ── FIXED TOP HEADER ───────────────────────────────────────────── */
+  .header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: var(--mobile-header) !important;
+    min-height: var(--mobile-header) !important;
+    padding: env(safe-area-inset-top, 0px) 10px 0 !important;
+    z-index: 2147483647 !important;
+  }
+
+  .header-logo::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  .header-subtitle {
+    display: none !important;
+  }
+
+  .header-nav {
+    /* The route navigation leaves the header and becomes the bottom bar. */
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: var(--mobile-player) !important;
+    width: 100% !important;
+    height: var(--mobile-nav) !important;
+    min-height: var(--mobile-nav) !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 3px 5px !important;
+    display: flex !important;
+    align-items: stretch !important;
+    gap: 3px !important;
+    border: 0 !important;
+    border-top: 1px solid rgba(201,168,76,.18) !important;
+    border-radius: 0 !important;
+    background: rgba(19,22,31,.98) !important;
+    box-shadow: 0 -5px 20px rgba(0,0,0,.38) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    overflow: hidden !important;
+    z-index: 2147483646 !important;
+  }
+
+  .header-nav-btn {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 3px 2px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    border: 0 !important;
+    border-radius: 9px !important;
+  }
+
+  .header-nav-btn .nav-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    margin: 0 !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+  }
+
+  /* Bottom bar is intentionally icon-first; route names stay in title/tooltips. */
+  .header-nav-btn .nav-label {
+    display: none !important;
+  }
+
+  /* ── CONTENT AREA ───────────────────────────────────────────────── */
+  .body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    padding-top: var(--mobile-header) !important;
+    padding-bottom: calc(var(--mobile-nav) + var(--mobile-player)) !important;
+  }
+
+  .main {
+    min-height: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Keep the drawer below the fixed header. */
+  .sidebar {
+    top: var(--mobile-header) !important;
+    bottom: 0 !important;
+  }
+
+  .sidebar-overlay {
+    top: var(--mobile-header) !important;
+  }
+
+  /* ── FIXED AUDIO PLAYER ─────────────────────────────────────────── */
+  .main-player {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: var(--mobile-player) !important;
+    min-height: var(--mobile-player) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    z-index: 2147483645 !important;
+  }
+
+  .player-row {
+    height: var(--mobile-player) !important;
+    min-height: var(--mobile-player) !important;
+    padding: 6px 10px !important;
+  }
+
+  /* The player must never cover the bottom navigation. */
+  .ayat-scroll {
+    padding-bottom: calc(var(--mobile-nav) + var(--mobile-player) + 20px) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding-left: 7px !important;
+    padding-right: 7px !important;
+  }
+
+  .header-nav {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  .header-nav-btn .nav-icon {
+    font-size: 17px !important;
+  }
+}
