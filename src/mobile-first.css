@@ -6,6 +6,23 @@
  * dock, compact reading surfaces, safe-area support and cleaner page spacing.
  */
 
+/* Current source commit shown beside the application title. */
+.header-logo::after {
+  content: "e33af11";
+  margin-left: 8px;
+  padding: 2px 5px;
+  border: 1px solid rgba(201,168,76,.28);
+  border-radius: 5px;
+  color: var(--text3);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1;
+  vertical-align: middle;
+  opacity: .8;
+}
+
 @media (max-width: 640px) {
   :root {
     --mobile-header: calc(52px + env(safe-area-inset-top, 0px));
@@ -45,9 +62,6 @@
     touch-action: manipulation;
   }
 
-  /* ─────────────────────────────────────────────
-     TOP BAR
-     ───────────────────────────────────────────── */
   .header {
     height: var(--mobile-header) !important;
     min-height: var(--mobile-header);
@@ -75,11 +89,18 @@
     max-width: 86px;
     font-size: 12px !important;
     letter-spacing: 1.2px !important;
-    overflow: hidden;
+    overflow: visible;
+    white-space: nowrap;
   }
 
   .header-logo .header-subtitle {
     display: none;
+  }
+
+  .header-logo::after {
+    margin-left: 5px;
+    padding: 2px 4px;
+    font-size: 8px;
   }
 
   .header-nav {
@@ -138,23 +159,11 @@
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 3px 12px rgba(0,0,0,.18) !important;
   }
 
-  .header-actions {
-    gap: 5px !important;
-  }
-
-  .header-user-btn {
-    padding: 2px !important;
-  }
-
+  .header-actions { gap: 5px !important; }
+  .header-user-btn { padding: 2px !important; }
   .header-avatar,
-  .header-avatar-placeholder {
-    width: 32px !important;
-    height: 32px !important;
-  }
+  .header-avatar-placeholder { width: 32px !important; height: 32px !important; }
 
-  /* ─────────────────────────────────────────────
-     DRAWER
-     ───────────────────────────────────────────── */
   .sidebar {
     top: var(--mobile-header) !important;
     width: min(92vw, 390px) !important;
@@ -163,61 +172,18 @@
     box-shadow: 12px 0 40px rgba(0,0,0,.5) !important;
   }
 
-  .sidebar-search {
-    padding: 12px !important;
-  }
+  .sidebar-search { padding: 12px !important; }
+  .sidebar-search input { min-height: 46px; padding: 10px 13px !important; border-radius: 12px !important; }
+  .surah-item { min-height: 58px; padding: 10px 14px !important; }
+  .surah-num { width: 34px !important; height: 34px !important; }
 
-  .sidebar-search input {
-    min-height: 46px;
-    padding: 10px 13px !important;
-    border-radius: 12px !important;
-  }
-
-  .surah-item {
-    min-height: 58px;
-    padding: 10px 14px !important;
-  }
-
-  .surah-num {
-    width: 34px !important;
-    height: 34px !important;
-  }
-
-  /* ─────────────────────────────────────────────
-     CONTENT / READING
-     ───────────────────────────────────────────── */
-  .body {
-    min-height: 0;
-  }
-
-  .main {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .surah-header {
-    padding: 10px 12px !important;
-    background: linear-gradient(180deg, var(--surface), rgba(12,14,20,.96)) !important;
-  }
-
-  .surah-header-ornament {
-    font-size: 23px !important;
-  }
-
-  .surah-header-title {
-    font-size: 8px !important;
-    letter-spacing: 1.5px !important;
-  }
-
-  .surah-header-sub {
-    font-size: 8px !important;
-    letter-spacing: 1px !important;
-  }
-
-  .bismillah-line {
-    padding: 10px 12px !important;
-    font-size: 22px !important;
-  }
+  .body { min-height: 0; }
+  .main { width: 100%; min-width: 0; }
+  .surah-header { padding: 10px 12px !important; background: linear-gradient(180deg, var(--surface), rgba(12,14,20,.96)) !important; }
+  .surah-header-ornament { font-size: 23px !important; }
+  .surah-header-title { font-size: 8px !important; letter-spacing: 1.5px !important; }
+  .surah-header-sub { font-size: 8px !important; letter-spacing: 1px !important; }
+  .bismillah-line { padding: 10px 12px !important; font-size: 22px !important; }
 
   .ayat-main {
     margin: 7px 8px;
@@ -228,104 +194,27 @@
     background: rgba(19,22,31,.42);
   }
 
-  .ayat-main:hover {
-    background: rgba(255,255,255,.025);
-  }
-
-  .ayat-number-badge {
-    width: 30px !important;
-    height: 30px !important;
-    margin-top: 3px;
-  }
-
-  .ayat-arabic {
-    font-size: clamp(22px, 6.1vw, 27px) !important;
-    line-height: 2.05 !important;
-    letter-spacing: 0 !important;
-  }
-
-  .ayat-learned-badge {
-    padding: 3px 7px !important;
-  }
-
-  .submenu {
-    padding: 10px 10px 14px !important;
-  }
-
+  .ayat-main:hover { background: rgba(255,255,255,.025); }
+  .ayat-number-badge { width: 30px !important; height: 30px !important; margin-top: 3px; }
+  .ayat-arabic { font-size: clamp(22px, 6.1vw, 27px) !important; line-height: 2.05 !important; letter-spacing: 0 !important; }
+  .ayat-learned-badge { padding: 3px 7px !important; }
+  .submenu { padding: 10px 10px 14px !important; }
   .submenu-header,
-  .submenu-tabs {
-    margin-left: -2px;
-    margin-right: -2px;
-    padding-bottom: 2px;
-  }
-
+  .submenu-tabs { margin-left: -2px; margin-right: -2px; padding-bottom: 2px; }
   .mode-btn,
-  .submenu-tab {
-    min-height: 44px;
-    padding: 9px 13px !important;
-  }
+  .submenu-tab { min-height: 44px; padding: 9px 13px !important; }
+  .words-area { gap: 7px !important; }
+  .word-btn { min-height: 42px; padding: 5px 9px !important; }
 
-  .words-area {
-    gap: 7px !important;
-  }
-
-  .word-btn {
-    min-height: 42px;
-    padding: 5px 9px !important;
-  }
-
-  /* ─────────────────────────────────────────────
-     AUDIO PLAYER
-     ───────────────────────────────────────────── */
-  .main-player {
-    z-index: 205 !important;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  .player-row {
-    height: var(--mobile-player) !important;
-    min-height: var(--mobile-player);
-    padding: 6px 10px !important;
-    gap: 7px !important;
-  }
-
-  .player-controls {
-    gap: 4px !important;
-    flex-shrink: 0;
-  }
-
-  .ctrl-btn {
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px;
-    min-height: 34px;
-  }
-
-  .ctrl-btn.play-btn {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px;
-    min-height: 40px;
-  }
-
-  .player-progress {
-    min-width: 52px;
-  }
-
-  .progress-bar-wrap {
-    height: 4px !important;
-  }
-
-  .loop-bar {
-    padding: 5px 10px 7px !important;
-    overflow-x: auto;
-    flex-wrap: nowrap !important;
-    scrollbar-width: none;
-  }
-
-  .loop-bar::-webkit-scrollbar {
-    display: none;
-  }
+  .main-player { z-index: 205 !important; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .player-row { height: var(--mobile-player) !important; min-height: var(--mobile-player); padding: 6px 10px !important; gap: 7px !important; }
+  .player-controls { gap: 4px !important; flex-shrink: 0; }
+  .ctrl-btn { width: 34px !important; height: 34px !important; min-width: 34px; min-height: 34px; }
+  .ctrl-btn.play-btn { width: 40px !important; height: 40px !important; min-width: 40px; min-height: 40px; }
+  .player-progress { min-width: 52px; }
+  .progress-bar-wrap { height: 4px !important; }
+  .loop-bar { padding: 5px 10px 7px !important; overflow-x: auto; flex-wrap: nowrap !important; scrollbar-width: none; }
+  .loop-bar::-webkit-scrollbar { display: none; }
 
   .reciter-trigger {
     right: 10px !important;
@@ -337,168 +226,51 @@
     box-shadow: 0 8px 24px rgba(0,0,0,.38) !important;
   }
 
-  .reciter-trigger-label {
-    max-width: 125px !important;
-  }
+  .reciter-trigger-label { max-width: 125px !important; }
+  .reciter-sheet { width: 100% !important; max-height: min(86dvh, 720px) !important; border-radius: 20px 20px 0 0 !important; border-bottom: 0 !important; }
+  .reciter-sheet::before { content: ''; width: 42px; height: 4px; border-radius: 999px; background: var(--border2); position: absolute; top: 7px; left: 50%; transform: translateX(-50%); }
+  .reciter-sheet-header { padding: 20px 14px 12px !important; }
+  .reciter-search { min-height: 46px; margin: 10px 12px 8px !important; width: calc(100% - 24px) !important; border-radius: 12px !important; }
+  .reciter-option { min-height: 54px !important; border-radius: 12px !important; }
 
-  /* Reciter sheet remains fully functional, but feels native on phones. */
-  .reciter-sheet {
-    width: 100% !important;
-    max-height: min(86dvh, 720px) !important;
-    border-radius: 20px 20px 0 0 !important;
-    border-bottom: 0 !important;
-  }
-
-  .reciter-sheet::before {
-    content: '';
-    width: 42px;
-    height: 4px;
-    border-radius: 999px;
-    background: var(--border2);
-    position: absolute;
-    top: 7px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  .reciter-sheet-header {
-    padding: 20px 14px 12px !important;
-  }
-
-  .reciter-search {
-    min-height: 46px;
-    margin: 10px 12px 8px !important;
-    width: calc(100% - 24px) !important;
-    border-radius: 12px !important;
-  }
-
-  .reciter-option {
-    min-height: 54px !important;
-    border-radius: 12px !important;
-  }
-
-  /* ─────────────────────────────────────────────
-     OTHER PAGES
-     ───────────────────────────────────────────── */
   .dash-page,
   .rev-page,
   .concord-page,
   .collections-page,
-  .qbook-page-content {
-    padding: 14px 10px calc(var(--mobile-nav) + var(--mobile-player) + 26px) !important;
-  }
-
+  .qbook-page-content { padding: 14px 10px calc(var(--mobile-nav) + var(--mobile-player) + 26px) !important; }
   .dash-page,
-  .rev-page {
-    gap: 14px !important;
-  }
-
-  .dash-kpi-row {
-    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
-    gap: 8px !important;
-  }
-
-  .dash-kpi {
-    padding: 14px 12px !important;
-    border-radius: 12px !important;
-  }
-
-  .dash-kpi-val {
-    font-size: 23px !important;
-  }
-
-  .dash-two-col {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-
-  .dash-card {
-    padding: 14px !important;
-    border-radius: 12px !important;
-  }
-
+  .rev-page { gap: 14px !important; }
+  .dash-kpi-row { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 8px !important; }
+  .dash-kpi { padding: 14px 12px !important; border-radius: 12px !important; }
+  .dash-kpi-val { font-size: 23px !important; }
+  .dash-two-col { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .dash-card { padding: 14px !important; border-radius: 12px !important; }
   .rev-stats-row,
-  .rev-filter-row {
-    gap: 7px !important;
-  }
+  .rev-filter-row { gap: 7px !important; }
+  .rev-stat-pill { flex: 1 1 calc(50% - 7px); min-width: 0; }
+  .rev-surah-header { min-height: 58px; padding: 10px 12px !important; }
+  .rev-ayat-grid { padding: 0 9px 10px !important; }
+  .rev-ayat-arabic { font-size: 22px !important; line-height: 1.95 !important; }
 
-  .rev-stat-pill {
-    flex: 1 1 calc(50% - 7px);
-    min-width: 0;
-  }
-
-  .rev-surah-header {
-    min-height: 58px;
-    padding: 10px 12px !important;
-  }
-
-  .rev-ayat-grid {
-    padding: 0 9px 10px !important;
-  }
-
-  .rev-ayat-arabic {
-    font-size: 22px !important;
-    line-height: 1.95 !important;
-  }
-
-  /* ─────────────────────────────────────────────
-     FORMS / MODALS / ACCESSIBILITY
-     ───────────────────────────────────────────── */
   .btn-primary,
   .btn-small,
   .reciter-reset,
-  .reciter-sheet-close {
-    min-height: 40px;
-  }
-
-  .voice-help {
-    left: 8px !important;
-    right: 8px !important;
-    max-width: none !important;
-    border-radius: 14px !important;
-  }
-
-  .voice-toast {
-    top: calc(var(--mobile-header) + 8px) !important;
-    max-width: calc(100vw - 20px) !important;
-    width: max-content;
-  }
+  .reciter-sheet-close { min-height: 40px; }
+  .voice-help { left: 8px !important; right: 8px !important; max-width: none !important; border-radius: 14px !important; }
+  .voice-toast { top: calc(var(--mobile-header) + 8px) !important; max-width: calc(100vw - 20px) !important; width: max-content; }
 
   @supports (padding: max(0px)) {
     .main,
-    .page-anim {
-      padding-bottom: max(0px, env(safe-area-inset-bottom, 0px));
-    }
+    .page-anim { padding-bottom: max(0px, env(safe-area-inset-bottom, 0px)); }
   }
 }
 
 @media (max-width: 380px) {
-  .header-logo {
-    max-width: 70px;
-  }
-
-  .header-nav-btn .nav-icon {
-    font-size: 17px !important;
-  }
-
-  .header-nav-btn {
-    font-size: 6.5px !important;
-  }
-
-  .ayat-main {
-    margin-left: 5px;
-    margin-right: 5px;
-  }
-
-  .ayat-arabic {
-    font-size: 21px !important;
-  }
-
-  .player-info {
-    display: none !important;
-  }
-
-  .reciter-trigger-label {
-    max-width: 95px !important;
-  }
+  .header-logo { max-width: none; }
+  .header-nav-btn .nav-icon { font-size: 17px !important; }
+  .header-nav-btn { font-size: 6.5px !important; }
+  .ayat-main { margin-left: 5px; margin-right: 5px; }
+  .ayat-arabic { font-size: 21px !important; }
+  .player-info { display: none !important; }
+  .reciter-trigger-label { max-width: 95px !important; }
 }
