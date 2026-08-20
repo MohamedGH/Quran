@@ -2,8 +2,8 @@
  * Breakpoints: 1200 / 900 / 700 / 480 / 380px.
  */
 
-/* Header displays the parent commit: 28ee859. */
-.header-logo::after { content:"28ee859"; margin-left:8px; padding:2px 5px; border:1px solid rgba(201,168,76,.28); border-radius:5px; color:var(--text3); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:9px; line-height:1; vertical-align:middle; opacity:.8; }
+/* Header displays the parent commit: caa0631. */
+.header-logo::after { content:"caa0631"; margin-left:8px; padding:2px 5px; border:1px solid rgba(201,168,76,.28); border-radius:5px; color:var(--text3); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:9px; line-height:1; vertical-align:middle; opacity:.8; }
 
 @media (max-width:1200px) {
   .header { padding-left:14px !important; padding-right:14px !important; gap:12px !important; }
