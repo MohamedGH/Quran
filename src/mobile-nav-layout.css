@@ -1,8 +1,4 @@
-/* Mobile navigation layout — single source of truth.
- *
- * .header-nav is rendered inside .header. On mobile we anchor it to the
- * viewport and keep the player gap explicit.
- */
+/* Mobile navigation layout — single source of truth. */
 
 :root {
   --mobile-player: 58px;
@@ -33,25 +29,21 @@
     right: 0 !important;
     top: auto !important;
     bottom: var(--mobile-player) !important;
-
     width: 100% !important;
     height: var(--mobile-nav) !important;
     min-height: var(--mobile-nav) !important;
     min-width: 0 !important;
     max-width: none !important;
     margin: 0 !important;
-
     display: flex !important;
     align-items: stretch !important;
     justify-content: space-around !important;
     gap: 3px !important;
     padding: 4px 6px !important;
-
     background: var(--surface) !important;
     border: 0 !important;
     border-top: 1px solid rgba(201, 168, 76, .16) !important;
     border-radius: 0 !important;
-
     box-shadow: 0 -4px 18px rgba(0, 0, 0, .35) !important;
     overflow: hidden !important;
     visibility: visible !important;
@@ -60,8 +52,6 @@
     z-index: 2147483646 !important;
   }
 
-  /* Audio player: occupies the strip immediately below the content and
-     immediately above the mobile navigation. No negative bottom/top hacks. */
   .main-player {
     bottom: 0 !important;
     left: 0 !important;
@@ -70,22 +60,24 @@
     z-index: 2147483645 !important;
   }
 
+  /* Never clip the player: all controls must remain reachable. */
   .player-row {
     width: 100% !important;
     min-width: 0 !important;
     height: var(--mobile-player) !important;
     min-height: var(--mobile-player) !important;
     padding: 5px 8px !important;
-    gap: 7px !important;
+    gap: 6px !important;
     display: flex !important;
     align-items: center !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 
+  /* Secondary information yields space first; controls never disappear. */
   .player-info {
-    flex: 0 1 92px !important;
-    min-width: 62px !important;
-    max-width: 100px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: 110px !important;
     overflow: hidden !important;
   }
 
@@ -93,20 +85,22 @@
     flex: 0 0 auto !important;
     display: flex !important;
     align-items: center !important;
+    justify-content: center !important;
     gap: 3px !important;
-    min-width: 0 !important;
+    min-width: max-content !important;
     white-space: nowrap !important;
   }
 
   .player-progress {
-    flex: 1 1 auto !important;
-    min-width: 28px !important;
+    flex: 0 1 100px !important;
+    min-width: 0 !important;
   }
 
   .ctrl-btn {
     width: 29px !important;
     height: 29px !important;
     min-width: 29px !important;
+    flex: 0 0 29px !important;
     font-size: 10px !important;
   }
 
@@ -114,10 +108,11 @@
     width: 35px !important;
     height: 35px !important;
     min-width: 35px !important;
+    flex-basis: 35px !important;
     font-size: 12px !important;
   }
 
-  /* Keep the reciter button in the same player row. */
+  /* Reciter stays in the same row and is allowed to shrink before controls. */
   .reciter-trigger {
     position: static !important;
     right: auto !important;
@@ -125,16 +120,17 @@
     z-index: auto !important;
     min-height: 29px !important;
     width: auto !important;
-    min-width: 34px !important;
-    max-width: 92px !important;
-    padding: 0 7px !important;
+    min-width: 30px !important;
+    max-width: 82px !important;
+    padding: 0 6px !important;
     border-radius: 16px !important;
     flex: 0 1 auto !important;
+    overflow: hidden !important;
   }
 
   .reciter-trigger-label {
     display: inline-block !important;
-    max-width: 54px !important;
+    max-width: 45px !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
@@ -155,40 +151,86 @@
   }
 
   .player-row {
-    padding: 4px 5px !important;
-    gap: 4px !important;
-  }
-
-  .player-info {
-    flex: 0 1 66px !important;
-    min-width: 48px !important;
-    max-width: 72px !important;
-  }
-
-  .player-controls {
+    padding: 4px 3px !important;
     gap: 2px !important;
   }
 
+  .player-info {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: 60px !important;
+  }
+
+  .player-controls {
+    gap: 1px !important;
+  }
+
   .ctrl-btn {
-    width: 27px !important;
-    height: 27px !important;
-    min-width: 27px !important;
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    flex-basis: 26px !important;
     font-size: 9px !important;
   }
 
   .ctrl-btn.play-btn {
-    width: 33px !important;
-    height: 33px !important;
-    min-width: 33px !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    flex-basis: 32px !important;
   }
 
   .reciter-trigger {
-    min-width: 30px !important;
-    max-width: 70px !important;
-    padding: 0 5px !important;
+    min-width: 26px !important;
+    max-width: 62px !important;
+    padding: 0 4px !important;
   }
 
   .reciter-trigger-label {
-    max-width: 38px !important;
+    max-width: 30px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  /* At 360px and below, hide only secondary text. Never hide controls. */
+  .player-info {
+    display: none !important;
+  }
+
+  .player-progress {
+    display: none !important;
+  }
+
+  .player-row {
+    justify-content: center !important;
+    gap: 2px !important;
+  }
+
+  .player-controls {
+    gap: 1px !important;
+  }
+
+  .ctrl-btn {
+    width: 25px !important;
+    height: 25px !important;
+    min-width: 25px !important;
+    flex-basis: 25px !important;
+  }
+
+  .ctrl-btn.play-btn {
+    width: 31px !important;
+    height: 31px !important;
+    min-width: 31px !important;
+    flex-basis: 31px !important;
+  }
+
+  .reciter-trigger {
+    min-width: 24px !important;
+    max-width: 48px !important;
+    padding: 0 3px !important;
+  }
+
+  .reciter-trigger-label {
+    display: none !important;
   }
 }
