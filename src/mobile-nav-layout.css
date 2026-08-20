@@ -1,16 +1,28 @@
 /* Mobile navigation layout — single source of truth.
  *
- * IMPORTANT: .header-nav is rendered inside .header. The header uses
- * backdrop-filter, which can establish a containing block for fixed
- * descendants on Chromium/WebView. Disable that mobile backdrop on the
- * header so the fixed navigation is anchored to the viewport, not the
- * ~54px header.
+ * .header-nav is rendered inside .header. On mobile we anchor it to the
+ * viewport and keep the player gap explicit.
  */
 
+:root {
+  --mobile-player: 58px;
+  --mobile-nav: 60px;
+}
+
+@media (max-width: 900px) {
+  :root {
+    --mobile-player: calc(58px + env(safe-area-inset-bottom, 0px));
+    --mobile-nav: 60px;
+  }
+}
+
 @media (max-width: 700px) {
+  :root {
+    --mobile-player: calc(58px + env(safe-area-inset-bottom, 0px));
+    --mobile-nav: 62px;
+  }
+
   .header {
-    /* Keep the header visually dark, but do not create a containing block
-       for the fixed bottom navigation. */
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
