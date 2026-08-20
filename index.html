@@ -2,7 +2,8 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0c0e14" />
     <title>QURÂN</title>
   </head>
 
@@ -10,5 +11,7 @@
     <div id="root"></div>
 
     <script type="module" src="/src/main.jsx"></script>
+    <!-- Loaded after the application stylesheet so the mobile-first layer wins on phones. -->
+    <link rel="stylesheet" href="/src/mobile-first.css" />
   </body>
 </html>
