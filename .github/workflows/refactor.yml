@@ -4,8 +4,6 @@ name: Refactor validation
   push:
     branches:
       - refactor
-    paths:
-      - ".github/workflows/refactor.yml"
   workflow_dispatch:
 
 permissions:
