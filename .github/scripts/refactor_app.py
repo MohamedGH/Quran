@@ -4,6 +4,16 @@ import re
 APP = Path("src/App.jsx")
 text = APP.read_text(encoding="utf-8")
 
+# Make the workflow safe to rerun after the extraction has already been applied.
+if (
+    'from "./services/firebase"' in text
+    and 'from "./services/audioRecorder"' in text
+    and '@capgo/capacitor-audio-recorder' not in text
+    and '// ─── Android / Capacitor detection' not in text
+):
+    print("App.jsx refactor already applied")
+    raise SystemExit(0)
+
 # Remove the Capacitor recorder import; the implementation moves to the service.
 text, count = re.subn(
     r'^import \{ CapacitorAudioRecorder \} from [\'\"]@capgo/capacitor-audio-recorder[\'\"];\n',
