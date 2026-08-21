@@ -4,6 +4,7 @@ import re
 APP = Path("src/App.jsx")
 text = APP.read_text(encoding="utf-8")
 
+# Safe extraction from the refactor baseline: keep App.jsx behavior while moving infrastructure.
 if (
     'from "./services/firebase"' in text
     and 'from "./services/audioRecorder"' in text
