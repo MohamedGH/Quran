@@ -1,6 +1,6 @@
 import { CapacitorAudioRecorder } from "@capgo/capacitor-audio-recorder";
 
-const IS_ANDROID = typeof window !== "undefined" &&
+export const IS_ANDROID = typeof window !== "undefined" &&
   typeof window.Capacitor !== "undefined" && /Android/i.test(navigator.userAgent);
 
 export function createAudioRecorder() {
