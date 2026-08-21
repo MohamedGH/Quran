@@ -4,6 +4,9 @@ name: Refactor validation
   push:
     branches:
       - refactor
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
