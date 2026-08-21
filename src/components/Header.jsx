@@ -1,10 +1,20 @@
 import React from "react";
+import HeaderUserMenu from "./HeaderUserMenu";
+
+const NAV_ITEMS = [
+  { id: "quran", icon: "📖", label: "CORAN" },
+  { id: "prononciation", icon: "🔤", label: "PRONON." },
+  { id: "dashboard", icon: "📊", label: "DASH" },
+  { id: "collections", icon: "🗂", label: "COLL." },
+  { id: "revision", icon: "✏", label: "RÉVISION" },
+];
 
 /**
  * Application header.
  *
- * Logic remains owned by App; this component only receives state and handlers.
- * This keeps the refactor behaviour-preserving.
+ * Logic remains owned by App; this component receives state and handlers.
+ * The account dropdown is isolated in HeaderUserMenu to keep this component
+ * focused on the global navigation and header actions.
  */
 export default function Header({
   sidebarOpen,
@@ -25,14 +35,6 @@ export default function Header({
   onSignOut,
   userMenuRef,
 }) {
-  const navItems = [
-    { id: "quran", icon: "📖", label: "CORAN" },
-    { id: "prononciation", icon: "🔤", label: "PRONON." },
-    { id: "dashboard", icon: "📊", label: "DASH" },
-    { id: "collections", icon: "🗂", label: "COLL." },
-    { id: "revision", icon: "✏", label: "RÉVISION" },
-  ];
-
   const toggleKeyboard = () => setShowArabicKeyboard(v => {
     const next = !v;
     try { localStorage.setItem("quran_arabic_keyboard", next ? "1" : "0"); } catch {}
@@ -61,7 +63,7 @@ export default function Header({
       </div>
 
       <nav className="header-nav" aria-label="Navigation principale">
-        {navItems.map(({ id, icon, label }) => (
+        {NAV_ITEMS.map(({ id, icon, label }) => (
           <button
             key={id}
             className={`header-nav-btn${activePage === id ? ` active-${id}` : ""}`}
@@ -121,30 +123,16 @@ export default function Header({
             </button>
 
             {showUserMenu && (
-              <div className="header-user-menu">
-                <div className="user-menu-header">
-                  <div className="user-menu-name">{currentUser.displayName || "Utilisateur"}</div>
-                  <div className="user-menu-email">{currentUser.email || ""}</div>
-                </div>
-
-                <button className="user-menu-item" onClick={() => { toggleKeyboard(); setShowUserMenu(false); }}>
-                  <div className="menu-left"><span>⌨️</span><span>Clavier Arabe</span></div>
-                  <span className={`user-menu-badge ${showArabicKeyboard ? "on" : "off"}`}>{showArabicKeyboard ? "ON" : "OFF"}</span>
-                </button>
-
-                <button className="user-menu-item" onClick={() => { setShowRappel(v => !v); setShowUserMenu(false); }}>
-                  <div className="menu-left"><span>🔔</span><span>Rappel Vocal</span></div>
-                  <span className={`user-menu-badge ${showRappel ? "on" : "off"}`}>{showRappel ? "ON" : "OFF"}</span>
-                </button>
-
-                <button className="user-menu-item" onClick={() => { setShowOptionsModal(true); setShowUserMenu(false); }}>
-                  <div className="menu-left"><span>⚙</span><span>Paramètres &amp; Sync</span></div>
-                </button>
-
-                <button className="user-menu-item logout" onClick={() => { setShowUserMenu(false); onSignOut(); }}>
-                  <div className="menu-left"><span>⏏</span><span>Se déconnecter</span></div>
-                </button>
-              </div>
+              <HeaderUserMenu
+                currentUser={currentUser}
+                showArabicKeyboard={showArabicKeyboard}
+                toggleKeyboard={toggleKeyboard}
+                showRappel={showRappel}
+                setShowRappel={setShowRappel}
+                setShowOptionsModal={setShowOptionsModal}
+                setShowUserMenu={setShowUserMenu}
+                onSignOut={onSignOut}
+              />
             )}
           </div>
         )}
