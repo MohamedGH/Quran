@@ -64,3 +64,4 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "refactor: use extracted Header component"
           git push origin HEAD:refactor
+# retrigger
