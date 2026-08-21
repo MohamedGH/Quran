@@ -1,50 +1,34 @@
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
-
-const browserGlobals = {
-  window: "readonly",
-  document: "readonly",
-  navigator: "readonly",
-  console: "readonly",
-  URL: "readonly",
-  Blob: "readonly",
-  MediaRecorder: "readonly",
-  Audio: "readonly",
-  AudioContext: "readonly",
-  webkitAudioContext: "readonly",
-  localStorage: "readonly",
-  sessionStorage: "readonly",
-  setTimeout: "readonly",
-  clearTimeout: "readonly",
-  setInterval: "readonly",
-  clearInterval: "readonly",
-  requestAnimationFrame: "readonly",
-  cancelAnimationFrame: "readonly",
-  Capacitor: "readonly",
-  CSS: "readonly",
-  fetch: "readonly",
-  Event: "readonly",
-  indexedDB: "readonly",
-  AbortController: "readonly",
-  IntersectionObserver: "readonly",
-  MediaMetadata: "readonly",
-  SpeechSynthesisUtterance: "readonly",
-  alert: "readonly",
-  FileReader: "readonly",
-  Response: "readonly",
-};
+import globals from "globals";
 
 export default [
+  // Generated files, old copies and local temporary folders
   {
-    ignores: ["dist/**", "node_modules/**", "android/**", "ios/**"],
+    ignores: [
+      "dist/**",
+      "build/**",
+      "node_modules/**",
+      "android/**",
+      "ios/**",
+      "doha/**",
+      "other/**",
+      "serverTimestamps/**",
+      "time/**",
+    ],
   },
+
+  // JavaScript / JSX
   {
     files: ["**/*.{js,jsx,mjs,cjs}"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
       parserOptions: { ecmaFeatures: { jsx: true } },
-      globals: browserGlobals,
+      globals: {
+        ...globals.browser,
+        Capacitor: "readonly",
+      },
     },
     plugins: {
       react,
@@ -61,14 +45,14 @@ export default [
       "react/react-in-jsx-scope": "off",
     },
   },
+
+  // Service Worker
   {
     files: ["public/audio-sw.js"],
     languageOptions: {
       globals: {
-        self: "readonly",
+        ...globals.serviceworker,
         indexedDB: "readonly",
-        Response: "readonly",
-        fetch: "readonly",
       },
     },
   },
