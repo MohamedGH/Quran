@@ -14394,7 +14394,7 @@ function CollectionAyatRow({ entry, collId, learnData, setLData, onToggleAyat, o
   const renderAyatText = () => {
     const showWordButtons = isSelecting;
     const showPartColors  = !isSelecting && showParts && Object.keys(wordPartMap).length > 0;
-
+const showParts = useSelector(sel.showParts);
     if (showWordButtons) {
       return (
         <div className="ayat-arabic" style={{ cursor: "default" }}>
