@@ -1,68 +1,88 @@
 name: one-time-refactor-header
+
 on:
   push:
-    branches: [refactor]
+    branches:
+      - refactor
+
 permissions:
   contents: write
+
 jobs:
   refactor-header:
     if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout refactor
+        uses: actions/checkout@v4
         with:
           ref: refactor
           fetch-depth: 0
+
       - name: Extract Header from App
         shell: python
         run: |
           from pathlib import Path
-          p = Path('src/App.jsx')
-          s = p.read_text(encoding='utf-8')
+
+          p = Path("src/App.jsx")
+          s = p.read_text(encoding="utf-8")
+
           if 'from "./components/Header"' in s or "from './components/Header'" in s:
-              print('Header import already present; nothing to do.')
+              print("Header import already present; nothing to do.")
               raise SystemExit(0)
+
           marker = '<div className="app" onDrop={handleDrop} onDragOver={e => e.preventDefault()}>'
           start = s.find(marker)
           if start < 0:
-              raise SystemExit('app marker not found')
+              raise SystemExit("app marker not found")
+
           hstart = s.find('<header className="header">', start)
-          hend = s.find('</header>', hstart)
+          hend = s.find("</header>", hstart)
           if hstart < 0 or hend < 0:
-              raise SystemExit('header block not found')
-          hend += len('</header>')
-          replacement = '''<Header
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-          activePage={activePage}
-          setActivePage={setActivePage}
-          listening={listening}
-          toggleVoice={toggleVoice}
-          showArabicKeyboard={showArabicKeyboard}
-          setShowArabicKeyboard={setShowArabicKeyboard}
-          showRappel={showRappel}
-          setShowRappel={setShowRappel}
-          showUserMenu={showUserMenu}
-          setShowUserMenu={setShowUserMenu}
-          showOptionsModal={showOptionsModal}
-          setShowOptionsModal={setShowOptionsModal}
-          currentUser={currentUser}
-          onSignOut={onSignOut}
-          userMenuRef={userMenuRef}
-        />'''
+              raise SystemExit("header block not found")
+          hend += len("</header>")
+
+          replacement = "\n".join([
+              "<Header",
+              "  sidebarOpen={sidebarOpen}",
+              "  setSidebarOpen={setSidebarOpen}",
+              "  activePage={activePage}",
+              "  setActivePage={setActivePage}",
+              "  listening={listening}",
+              "  toggleVoice={toggleVoice}",
+              "  showArabicKeyboard={showArabicKeyboard}",
+              "  setShowArabicKeyboard={setShowArabicKeyboard}",
+              "  showRappel={showRappel}",
+              "  setShowRappel={setShowRappel}",
+              "  showUserMenu={showUserMenu}",
+              "  setShowUserMenu={setShowUserMenu}",
+              "  showOptionsModal={showOptionsModal}",
+              "  setShowOptionsModal={setShowOptionsModal}",
+              "  currentUser={currentUser}",
+              "  onSignOut={onSignOut}",
+              "  userMenuRef={userMenuRef}",
+              "/>"
+          ])
+
           s = s[:hstart] + replacement + s[hend:]
+
           import_line = 'import Header from "./components/Header";\n'
-          first_import = s.find('import React')
+          first_import = s.find("import React")
+          if first_import < 0:
+              raise SystemExit("React import not found")
           s = s[:first_import] + import_line + s[first_import:]
-          p.write_text(s, encoding='utf-8')
+
+          p.write_text(s, encoding="utf-8")
+
       - name: Commit and remove temporary workflow
         run: |
-          rm -f .github/workflows/one-time-refactor-header.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/one-time-refactor-header.yml
           git add src/App.jsx .github/workflows/one-time-refactor-header.yml
-          git diff --cached --quiet && exit 0
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
           git commit -m "refactor: use extracted Header component"
           git push origin HEAD:refactor
-# retrigger
-# triggered by ChatGPT
