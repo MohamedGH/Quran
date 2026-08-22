@@ -314,12 +314,21 @@ function AppInner({ currentUser, onSignOut }) {
   const activeInputRef = useRef(null);
 
   useEffect(() => {
-    dispatch(quranActions.fetchSurahsThunk());
+    fetchSurahs().then(data => {
+      dispatch(quranActions.setSurahs(data));
+    }).catch(err => console.error("fetchSurahs error", err));
   }, [dispatch]);
 
   useEffect(() => {
     if (selectedSurah) {
-      dispatch(quranActions.fetchAyatsThunk(selectedSurah));
+      dispatch(quranActions.setLoadingAyats(true));
+      fetchAyats(selectedSurah).then(data => {
+        dispatch(quranActions.setAyats(data?.ayahs || []));
+        dispatch(quranActions.setLoadingAyats(false));
+      }).catch(err => {
+        console.error("fetchAyats error", err);
+        dispatch(quranActions.setLoadingAyats(false));
+      });
     }
   }, [selectedSurah, dispatch]);
 
