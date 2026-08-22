@@ -37,7 +37,7 @@ pnpm-debug.log*
 !.vscode/extensions.json
 !.vscode/settings.json
 .idea/
-.vs/*
+.vs/
 
 
 # OS
@@ -49,12 +49,12 @@ Thumbs.db
 *.temp
 
 #other
-doha/*
-server/*
-serverTimestamps/*
-time/*
-whisper-server/*
-other/*
+doha/
+server/
+serverTimestamps/
+time/
+whisper-server/
+other/
 
 # Firebase / Google Services
 android/app/google-services.json
