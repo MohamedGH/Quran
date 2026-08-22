@@ -28,6 +28,7 @@ import SyncConsole from "./components/SyncConsole";
 import CloudSyncManager from "./components/CloudSyncManager";
 import ArabicHighlighted from "./components/ArabicHighlighted";
 import Submenu from "./components/Submenu";
+import QuranReaderPage from "./components/QuranReaderPage";
 
 import DashboardPage from "./components/pages/DashboardPage";
 import PrononciationPage from "./components/pages/PrononciationPage";
@@ -215,42 +216,12 @@ function AppInner({ currentUser, onSignOut }) {
             <Routes>
               <Route path="/" element={<Navigate to="/quran/1/1" replace />} />
               <Route path="/quran/:surahNum?/:ayatNum?" element={
-                <div style={{ padding: 20, color: "var(--text2)", fontFamily: "'Cinzel',serif" }}>
-                  <div className="surah-header">
-                    <div className="surah-header-ornament">
-                      {(surahs || []).find(s => s.number === selectedSurah)?.name || ""}
-                    </div>
-                    <div className="surah-header-title">
-                      SOURATE {selectedSurah} · {(surahs || []).find(s => s.number === selectedSurah)?.englishName || ""}
-                    </div>
-                  </div>
-                  <div className="bismillah-line">
-                    بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
-                  </div>
-                  <div style={{ marginTop: 20 }}>
-                    {(ayats || []).map(a => (
-                      <div key={a.numberInSurah} style={{ borderBottom: "1px solid var(--border)", padding: "14px 0" }}>
-                        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                          <div className="ayat-number-badge">{a.numberInSurah}</div>
-                          <div style={{ flex: 1 }}>
-                            <ArabicHighlighted text={a.text} />
-                          </div>
-                        </div>
-                        <Submenu
-                          ayat={a}
-                          surahNum={selectedSurah}
-                          ld={learnData[selectedSurah]?.[a.numberInSurah] || {}}
-                          setLData={handleSetLData}
-                          submenuMode={openAyatNum === a.numberInSurah ? submenuMode : "lecture"}
-                          setSubmenuMode={(m) => dispatch(uiActions.setSubmenuMode(m))}
-                          audioUrl={`https://everyayah.com/data/Alafasy_128kbps/${String(selectedSurah).padStart(3,"0")}${String(a.numberInSurah).padStart(3,"0")}.mp3`}
-                          collections={collections}
-                          onOpenCollModal={() => dispatch(collectionsActions.openCollModal({ surahNum: selectedSurah, ayatNum: a.numberInSurah }))}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <QuranReaderPage
+                  currentUser={currentUser}
+                  onNavigate={handleNavigateFromPages}
+                  listening={listening}
+                  toggleVoice={() => setListening(v => !v)}
+                />
               } />
               <Route path="/dashboard" element={<DashboardPage learnData={learnData} surahs={surahs} onNavigate={handleNavigateFromPages} goals={{}} activity={{}} onSetGoal={() => {}} onRecordActivity={() => {}} />} />
               <Route path="/prononciation" element={<PrononciationPage />} />
