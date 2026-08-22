@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { SUGGESTED_SEARCHES } from "../../utils/quranData";
+import "./ConcordancePage.css";
 import { highlightArabic, stripDiacritics } from "../../utils/arabicUtils";
 import { fetchSurahDefault } from "../../services/quranApi";
 

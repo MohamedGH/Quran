@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
+import "./ArabicKeyboard.css";
 
 export const ArabicKeyboardContext = createContext({
   show: false,

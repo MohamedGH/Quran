@@ -5,6 +5,7 @@ import { AyatCollectionsTab } from "./pages/CollectionsPage";
 import EditorWords from "./EditorWords";
 import VoiceRecorder from "./VoiceRecorder";
 import RecitationChecker from "./RecitationChecker";
+import "./Submenu.css";
 
 export function AnimatedPage({ children, pageKey }) {
   return <div key={pageKey} className="page-anim">{children}</div>;

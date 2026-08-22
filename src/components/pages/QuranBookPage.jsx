@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { fetchQuranPage } from "../../services/quranApi";
+import "./QuranBookPage.css";
 
 const MUSHAF_TOTAL = 604;
 

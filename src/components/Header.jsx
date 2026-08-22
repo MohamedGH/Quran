@@ -1,5 +1,6 @@
 import React from "react";
 import HeaderUserMenu from "./HeaderUserMenu";
+import "./Header.css";
 
 const NAV_ITEMS = [
   { id: "quran", icon: "📖", label: "CORAN" },

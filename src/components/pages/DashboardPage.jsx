@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { SURAH_INFO } from "../../utils/quranData";
+import "./DashboardPage.css";
 
 export function DonutChart({ pct, color, size = 80, stroke = 8 }) {
   const r = (size - stroke) / 2;

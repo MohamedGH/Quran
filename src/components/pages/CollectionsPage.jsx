@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import ArabicHighlighted from "../ArabicHighlighted";
+import "./CollectionsPage.css";
 
 export function AyatCollectionsTab({ surahNum, ayatNum, collections = [], ayatInCollections = [], onOpenModal }) {
   return (

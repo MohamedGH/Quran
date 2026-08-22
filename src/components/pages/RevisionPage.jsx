@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { computeMastery, masteryColor, splitArabicWords } from "../../utils/arabicUtils";
+import "./RevisionPage.css";
 
 export function MasteryBar({ pct, size = 'sm' }) {
   const h = size === 'lg' ? 8 : 4;

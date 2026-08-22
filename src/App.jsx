@@ -4,7 +4,6 @@ import { Provider, useSelector, useDispatch, shallowEqual } from "react-redux";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { firebaseAuth } from "./services/firebase";
 import "./App.css";
-import { StyleTag } from "./styles";
 
 import {
   store, sel, uiActions, quranActions, playerActions,
@@ -150,7 +149,6 @@ function AppInner({ currentUser, onSignOut }) {
 
   return (
     <ArabicKeyboardContext.Provider value={{ show: showArabicKeyboard, setShow: setShowArabicKeyboard, activeInput: activeInputRef }}>
-      <StyleTag />
       <div className="app">
         <Header
           sidebarOpen={sidebarOpen}

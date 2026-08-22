@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { ARABIC_LETTERS, HARAKATS } from "../../utils/quranData";
+import "./PrononciationPage.css";
 
 export default function PrononciationPage() {
   const [selectedLetter, setSelectedLetter] = useState(ARABIC_LETTERS[0]);

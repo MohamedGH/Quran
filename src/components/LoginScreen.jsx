@@ -6,6 +6,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { firebaseAuth, googleProvider } from "../services/firebase";
+import "./LoginScreen.css";
 
 export default function LoginScreen({ onLoggedIn }) {
   const [isRegister, setIsRegister] = useState(false);
@@ -57,6 +58,10 @@ export default function LoginScreen({ onLoggedIn }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDemo = () => {
+    onLoggedIn?.({ uid: "demo-user", email: "demo@example.com", displayName: "Visiteur" });
   };
 
   return (
@@ -174,7 +179,20 @@ export default function LoginScreen({ onLoggedIn }) {
           <span style={{ fontSize:14 }}>🌐</span> Continuer avec Google
         </button>
 
-        <div style={{ textAlign:"center", marginTop:8 }}>
+        <button
+          onClick={handleDemo}
+          style={{
+            width:"100%", padding:"10px 14px", background:"rgba(201,168,76,.1)",
+            border:"1px solid var(--gold)", borderRadius:8, color:"var(--gold2)",
+            fontFamily:"'Cinzel',serif", fontSize:10, letterSpacing:1, cursor:"pointer",
+            display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+            transition:"all .2s",
+          }}
+        >
+          <span>☽</span> Continuer sans compte (Mode démo)
+        </button>
+
+        <div style={{ textAlign:"center", marginTop:4 }}>
           <button
             onClick={() => { setIsRegister(!isRegister); setError(null); }}
             style={{ background:"none", border:"none", color:"var(--gold2)", fontSize:9, cursor:"pointer", letterSpacing:1, fontFamily:"'Cinzel',serif" }}
