@@ -280,7 +280,7 @@ function AppInner({ currentUser, onSignOut }) {
   useEffect(() => {
     if (activePage === 'quran' && !isNaN(urlAyatNum) && urlAyatNum > 0) {
       if (urlAyatNum !== openAyatNum) {
-        dispatch(uiActions.setOpenAyatNum(urlAyatNum));
+        dispatch(quranActions.setOpenAyatNum(urlAyatNum));
       }
     }
   }, [location.pathname, activePage, urlAyatNum, openAyatNum, dispatch]);
@@ -298,7 +298,7 @@ function AppInner({ currentUser, onSignOut }) {
   const handleSurahClick = useCallback((num) => {
     const an = lastAyatBySurah[num] || 1;
     dispatch(quranActions.setSelectedSurah(num));
-    dispatch(uiActions.setOpenAyatNum(an));
+    dispatch(quranActions.setOpenAyatNum(an));
     navigate(`/quran/${num}/${an}`);
     if (window.innerWidth <= 640) dispatch(uiActions.setSidebarOpen(false));
   }, [dispatch, navigate, lastAyatBySurah]);
@@ -325,7 +325,7 @@ function AppInner({ currentUser, onSignOut }) {
 
   const handleNavigateFromPages = (surahNum, ayatNum) => {
     dispatch(quranActions.setSelectedSurah(surahNum));
-    dispatch(uiActions.setOpenAyatNum(ayatNum));
+    dispatch(quranActions.setOpenAyatNum(ayatNum));
     navigate(`/quran/${surahNum}/${ayatNum}`);
   };
 
