@@ -173,6 +173,18 @@ export default function QuranReaderPage({
     return collections.filter(c => (c.ayats || c.items || []).some(it => `${it.surahNum}:${it.ayatNum}` === key));
   }, [collections]);
 
+  // Auto-scroll to currently playing or opened verse
+  const scrollContainerRef = useRef(null);
+  useEffect(() => {
+    if (!scrollContainerRef.current) return;
+    const targetNum = playingAyatNum || openAyatNum;
+    if (targetNum == null) return;
+    const el = scrollContainerRef.current.querySelector(`[data-ayat="${targetNum}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [playingAyatNum, openAyatNum]);
+
   if (!selectedSurah) {
     return (
       <div className="empty-state">
@@ -211,18 +223,6 @@ export default function QuranReaderPage({
   const unmarkAllLearned = () => ayats.forEach(a => handleSetLData(selectedSurah.number, a.numberInSurah, d => ({ ...d, learned: false })));
 
   const loadedCount = ayats.filter(a => !!timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]).length;
-
-  // Auto-scroll to currently playing or opened verse
-  const scrollContainerRef = useRef(null);
-  useEffect(() => {
-    if (!scrollContainerRef.current) return;
-    const targetNum = playingAyatNum || openAyatNum;
-    if (targetNum == null) return;
-    const el = scrollContainerRef.current.querySelector(`[data-ayat="${targetNum}"]`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  }, [playingAyatNum, openAyatNum]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
