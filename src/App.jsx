@@ -74,31 +74,33 @@ function AppInner({ currentUser, onSignOut }) {
   const urlSurahNum     = parseInt(urlSegs[1]);
   const urlAyatNum      = parseInt(urlSegs[2]);
 
-  // Sync URL → Redux (surah & ayat)
+  // Sync URL → Redux on initial load or browser navigation
+  const prevPathRef = useRef(null);
   useEffect(() => {
     if (activePage !== 'quran') return;
+    if (prevPathRef.current === location.pathname) return;
+    prevPathRef.current = location.pathname;
+
     const sn = (!isNaN(urlSurahNum) && urlSurahNum >= 1 && urlSurahNum <= 114) ? urlSurahNum : 1;
     if (sn !== selectedSurah) {
       dispatch(quranActions.setSelectedSurah(sn));
     }
-    if (!isNaN(urlAyatNum) && urlAyatNum >= 1 && urlAyatNum !== openAyatNum) {
-      dispatch(quranActions.setOpenAyatNum(urlAyatNum));
+    if (!isNaN(urlAyatNum) && urlAyatNum >= 1) {
+      if (urlAyatNum !== openAyatNum) {
+        dispatch(quranActions.setOpenAyatNum(urlAyatNum));
+      }
+    } else if (isNaN(urlAyatNum) && openAyatNum !== null) {
+      dispatch(quranActions.setOpenAyatNum(null));
     }
-  }, [activePage, urlSurahNum, urlAyatNum, selectedSurah, openAyatNum, dispatch]);
+  }, [activePage, location.pathname, urlSurahNum, urlAyatNum, selectedSurah, openAyatNum, dispatch]);
 
-  // Sync Redux openAyatNum → URL
+  // Sync Redux openAyatNum → URL when user changes state in Redux
   useEffect(() => {
     if (activePage !== 'quran' || !selectedSurah) return;
-    if (openAyatNum != null) {
-      const target = `/quran/${selectedSurah}/${openAyatNum}`;
-      if (location.pathname !== target) {
-        navigate(target, { replace: true });
-      }
-    } else {
-      const target = `/quran/${selectedSurah}`;
-      if (location.pathname !== target && location.pathname !== `/quran/${selectedSurah}/`) {
-        navigate(target, { replace: true });
-      }
+    const expectedPath = openAyatNum != null ? `/quran/${selectedSurah}/${openAyatNum}` : `/quran/${selectedSurah}`;
+    if (location.pathname !== expectedPath && location.pathname !== `${expectedPath}/`) {
+      prevPathRef.current = expectedPath;
+      navigate(expectedPath, { replace: true });
     }
   }, [activePage, selectedSurah, openAyatNum, location.pathname, navigate]);
 
