@@ -29,7 +29,7 @@
 .coll-empty-arabic { font-family: 'Amiri Quran', serif; font-size: 36px; color: var(--gold); opacity: .3; direction: rtl; }
 .coll-empty-msg { font-size: 10px; letter-spacing: 2px; text-align: center; line-height: 1.8; }
 
-.coll-modal-overlay { position: fixed; inset: 0; z-index: 500; background: rgba(0, 0, 0, .6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.coll-modal-overlay { position: fixed; inset: 0; z-index: 500; background: rgba(0, 0, 0, .6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px; padding-bottom: 20px; overflow-y: overlay; }
 .coll-modal { background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; padding: 24px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 24px 64px rgba(0, 0, 0, .5); }
 .coll-modal-title { font-size: 11px; letter-spacing: 3px; color: var(--gold2); }
 .coll-modal-subtitle { font-family: 'Amiri Quran', serif; font-size: 17px; direction: rtl; text-align: right; color: var(--text2); line-height: 1.7; padding: 8px 12px; background: var(--surface3); border-radius: 6px; border: 1px solid var(--border); }

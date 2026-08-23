@@ -212,6 +212,18 @@ export default function QuranReaderPage({
 
   const loadedCount = ayats.filter(a => !!timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]).length;
 
+  // Auto-scroll to currently playing or opened verse
+  const scrollContainerRef = useRef(null);
+  useEffect(() => {
+    if (!scrollContainerRef.current) return;
+    const targetNum = playingAyatNum || openAyatNum;
+    if (targetNum == null) return;
+    const el = scrollContainerRef.current.querySelector(`[data-ayat="${targetNum}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [playingAyatNum, openAyatNum]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {/* Header toolbar */}
@@ -256,6 +268,50 @@ export default function QuranReaderPage({
           >
             {pageMode ? '📖 MODE PAGE' : '📄 MODE SOURATE'}
           </button>
+
+          <label
+            style={{
+              fontSize: 8, letterSpacing: 1, padding: '4px 10px', borderRadius: 20,
+              fontFamily: "'Cinzel',serif", cursor: 'pointer',
+              background: 'rgba(62,184,160,.12)',
+              border: '1px solid var(--teal)',
+              color: 'var(--teal2)',
+              display: 'inline-flex', alignItems: 'center', gap: 4
+            }}
+          >
+            <input
+              type="file"
+              accept=".json"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  try {
+                    const parsed = JSON.parse(ev.target.result);
+                    if (parsed && typeof parsed === 'object') {
+                      if (parsed.numberInSurah || parsed.words) {
+                        const an = parsed.numberInSurah || 1;
+                        dispatch(playerActions.updateTimestamp({ [tskey(selectedSurah.number, an)]: parsed }));
+                      } else {
+                        const mapUpdates = {};
+                        Object.entries(parsed).forEach(([k, v]) => {
+                          if (k.includes(':')) mapUpdates[k] = v;
+                          else mapUpdates[`${recitatorId}:${selectedSurah.number}:${k}`] = v;
+                        });
+                        dispatch(playerActions.updateTimestamp(mapUpdates));
+                      }
+                    }
+                  } catch (err) {
+                    alert('Erreur lors de la lecture du fichier JSON: ' + err.message);
+                  }
+                };
+                reader.readAsText(file);
+              }}
+            />
+            📂 CHARGER TIMESTAMPS
+          </label>
         </div>
       </div>
 
@@ -309,7 +365,7 @@ export default function QuranReaderPage({
       />
 
       {/* Ayat scroll list */}
-      <div className="ayat-scroll">
+      <div className="ayat-scroll" ref={scrollContainerRef}>
         {(filteredAyats || []).map((a) => {
           const isPlaying = playingAyatNum === a.numberInSurah;
           const isOpen = openAyatNum === a.numberInSurah;
@@ -372,6 +428,7 @@ export default function QuranReaderPage({
           return (
             <div
               key={a.numberInSurah}
+              data-ayat={a.numberInSurah}
               className={`ayat-row${isPlaying ? " playing" : ""}${isOpen ? " current" : ""}${ld.learned ? " learned" : ""}`}
             >
               <div

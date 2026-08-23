@@ -411,6 +411,8 @@ export function DecouverteMode({ ayat, surahNum, ld, setLData, audioUrl, timesta
   const [revealedUpTo, setRevealedUpTo] = useState(-1);
   const audioRef = useRef(null);
 
+  const { isActive: isToReviseActive, toggleAll: toggleToRevise } = useToRevise(ld, surahNum, ayat.numberInSurah, setLData);
+
   const isRevealed = (i) => i <= revealedUpTo;
   const revealNext = () => setRevealedUpTo(v => Math.min(v + 1, words.length - 1));
   const reset      = () => setRevealedUpTo(-1);
@@ -423,6 +425,22 @@ export function DecouverteMode({ ayat, surahNum, ld, setLData, audioUrl, timesta
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:14, padding:'14px 16px' }}>
       <audio ref={audioRef} style={{ display:'none' }} />
+
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div style={{ fontSize:9, letterSpacing:2, color:'var(--text3)' }}>👁 MODE DÉCOUVERTE</div>
+        <button
+          onClick={toggleToRevise}
+          style={{
+            fontSize:8, letterSpacing:1.5, padding:'4px 12px', borderRadius:6, cursor:'pointer',
+            fontFamily:"'Cinzel',serif", transition:'all .2s',
+            background: isToReviseActive ? 'rgba(201,168,76,.15)' : 'transparent',
+            border: `1px solid ${isToReviseActive ? 'var(--gold)' : 'rgba(255,255,255,.15)'}`,
+            color: isToReviseActive ? 'var(--gold2)' : 'var(--text3)',
+          }}
+        >
+          {isToReviseActive ? '🔖 À RÉVISER (MARQUÉ)' : '🔖 MARQUER À RÉVISER'}
+        </button>
+      </div>
 
       <div style={{ direction:'rtl', fontFamily:"'Amiri Quran',serif",
         lineHeight:2.4, textAlign:'center', padding:'12px 10px',
