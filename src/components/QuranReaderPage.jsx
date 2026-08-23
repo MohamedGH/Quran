@@ -58,7 +58,7 @@ export default function QuranReaderPage({
   const [showSurahInfo, setShowSurahInfo]   = useState(false);
   const [showGoToAyat, setShowGoToAyat]     = useState(false);
   const [goToInput, setGoToInput]         = useState("");
-  const [recitatorId, setRecitatorId]       = useState("Alafasy_128kbps");
+  const [recitatorId, setRecitatorId]       = useState(() => { try { return localStorage.getItem('quran_recitator') || 'ar.alafasy'; } catch { return 'ar.alafasy'; } });
   const [bitrateVersion, setBitrateVersion] = useState(0);
 
   const selectedSurah = (surahs || []).find(s => s.number === selectedSurahNum) || null;
@@ -299,7 +299,7 @@ export default function QuranReaderPage({
                   setLData={handleSetLData}
                   submenuMode={submenuMode}
                   setSubmenuMode={(m) => dispatch(quranActions.setSubmenuMode(m))}
-                  audioUrl={`https://everyayah.com/data/${recitatorId}/${String(selectedSurah.number).padStart(3, "0")}${String(a.numberInSurah).padStart(3, "0")}.mp3`}
+                  audioUrl={`${getAudioBase()}/${a.number}.mp3`}
                   collections={collections}
                 />
               )}

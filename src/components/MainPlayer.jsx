@@ -28,7 +28,7 @@ export default function MainPlayer({
   setLoopEndInput,
   onApplyLoopInput,
   // Reciter state
-  recitatorId = "Alafasy_128kbps",
+  recitatorId = "ar.alafasy",
   setRecitatorId,
   // Timestamps
   timestampsMap = {},
