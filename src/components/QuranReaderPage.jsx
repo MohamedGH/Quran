@@ -463,21 +463,39 @@ export default function QuranReaderPage({
                 </div>
 
                 <div className="ayat-arabic">
-                  <ArabicHighlighted
-                    text={a.text}
-                    timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
-                    currentMs={isPlaying ? mainCurrentMs : 0}
-                    showQalqala={showQalqala}
-                    showMadd={showMadd}
-                    showIzhar={showIzhar}
-                    showIdgham={showIdgham}
-                    onWordClick={handleWordClick}
-                    ld={ld}
-                    partSelectAyat={partSelectAyat}
-                    partSelectStep={partSelectStep}
-                    partSelectStart={partSelectStart}
-                    ayatNum={a.numberInSurah}
-                  />
+                  {isPlaying ? (
+                    <PlayingArabicHighlighted
+                      text={a.text}
+                      timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
+                      mode="main"
+                      showQalqala={showQalqala}
+                      showMadd={showMadd}
+                      showIzhar={showIzhar}
+                      showIdgham={showIdgham}
+                      onWordClick={handleWordClick}
+                      ld={ld}
+                      partSelectAyat={partSelectAyat}
+                      partSelectStep={partSelectStep}
+                      partSelectStart={partSelectStart}
+                      ayatNum={a.numberInSurah}
+                    />
+                  ) : (
+                    <ArabicHighlighted
+                      text={a.text}
+                      timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
+                      currentMs={0}
+                      showQalqala={showQalqala}
+                      showMadd={showMadd}
+                      showIzhar={showIzhar}
+                      showIdgham={showIdgham}
+                      onWordClick={handleWordClick}
+                      ld={ld}
+                      partSelectAyat={partSelectAyat}
+                      partSelectStep={partSelectStep}
+                      partSelectStart={partSelectStart}
+                      ayatNum={a.numberInSurah}
+                    />
+                  )}
                 </div>
               </div>
 
