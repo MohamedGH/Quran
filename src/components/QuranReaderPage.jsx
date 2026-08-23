@@ -436,9 +436,6 @@ export default function QuranReaderPage({
                 onClick={() => {
                   const newOpen = isOpen ? null : a.numberInSurah;
                   dispatch(quranActions.setOpenAyatNum(newOpen));
-                  if (!isOpen) {
-                    dispatch(quranActions.setSubmenuMode("lecture"));
-                  }
                 }}
               >
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, flexShrink: 0 }}>

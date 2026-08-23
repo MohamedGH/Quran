@@ -134,6 +134,7 @@ export function ToRevisePanel({ ayat, surahNum, ld, setLData }) {
 
   const splitChars = splitArabicChars;
   const gold = 'var(--gold)'; const gold2 = 'var(--gold2)';
+  const history = ld?.reviseHistory || [];
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:14, padding:'14px 16px' }}>
@@ -223,6 +224,39 @@ export function ToRevisePanel({ ayat, surahNum, ld, setLData }) {
                   border: `1px solid ${pSel ? gold : 'rgba(255,255,255,.1)'}`,
                   color: pSel ? gold2 : 'var(--text2)',
                 }}>PARTIE {pi + 1}</button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div style={{ display:'flex', flexDirection:'column', gap:8, borderTop:'1px solid var(--border)', paddingTop:12 }}>
+          <div style={{ fontSize:8, letterSpacing:1.5, color:'var(--text3)' }}>HISTORIQUE DES RÉVISIONS</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+            {history.slice(-5).reverse().map((h, idx) => {
+              const startStr = h.startDate ? new Date(h.startDate).toLocaleString() : 'Date inconnue';
+              const isCurrent = !h.endDate;
+              const wordsCount = Array.isArray(h.words) ? h.words.length : (h.words === 'all' ? 'Toutes' : 0);
+              return (
+                <div key={idx} style={{
+                  display:'flex', alignItems:'center', justifyContent:'space-between',
+                  padding:'6px 10px', background:'var(--surface3)', borderRadius:6,
+                  border:`1px solid ${isCurrent ? gold : 'var(--border)'}`, fontSize:8, fontFamily:"'Cinzel',serif"
+                }}>
+                  <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+                    <span style={{ color: isCurrent ? gold2 : 'var(--text2)' }}>{startStr}</span>
+                    <span style={{ color:'var(--text3)' }}>Mots: {wordsCount} · Parts: {(h.parts||[]).length}</span>
+                  </div>
+                  <span style={{
+                    padding:'2px 6px', borderRadius:4,
+                    background: isCurrent ? 'rgba(201,168,76,.15)' : 'rgba(255,255,255,.05)',
+                    color: isCurrent ? gold2 : 'var(--text3)',
+                    border: `1px solid ${isCurrent ? gold : 'var(--border2)'}`
+                  }}>
+                    {isCurrent ? 'EN COURS' : 'TERMINÉ'}
+                  </span>
+                </div>
               );
             })}
           </div>
@@ -411,7 +445,7 @@ export function DecouverteMode({ ayat, surahNum, ld, setLData, audioUrl, timesta
   const [revealedUpTo, setRevealedUpTo] = useState(-1);
   const audioRef = useRef(null);
 
-  const { isActive: isToReviseActive, toggleAll: toggleToRevise } = useToRevise(ld, surahNum, ayat.numberInSurah, setLData);
+  const { isActive: isToReviseActive, selWords, toggleAll: toggleToRevise, toggleWord } = useToRevise(ld, surahNum, ayat.numberInSurah, setLData);
 
   const isRevealed = (i) => i <= revealedUpTo;
   const revealNext = () => setRevealedUpTo(v => Math.min(v + 1, words.length - 1));
@@ -448,15 +482,33 @@ export function DecouverteMode({ ayat, surahNum, ld, setLData, audioUrl, timesta
         display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center', alignItems:'flex-end' }}>
         {words.map((w, i) => {
           const rev = isRevealed(i);
+          const isMarked = selWords.includes(i);
           return (
-            <span key={i} onClick={() => !rev && setRevealedUpTo(i)} style={{
-              display:'inline-block', padding:'2px 8px', borderRadius:6,
-              fontFamily:"'Amiri Quran',serif", fontSize: rev ? 22 : 20,
-              color: rev ? 'var(--text1)' : 'transparent',
-              background: rev ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.07)',
-              border: '1px solid rgba(255,255,255,.18)',
-              minWidth: rev ? 0 : 34, textAlign:'center', cursor:'pointer',
-            }}>{rev ? w : '▪▪▪'}</span>
+            <span
+              key={i}
+              onClick={() => {
+                if (!rev) {
+                  setRevealedUpTo(i);
+                } else {
+                  toggleWord(i);
+                }
+              }}
+              style={{
+                display:'inline-block', padding:'2px 8px', borderRadius:6,
+                fontFamily:"'Amiri Quran',serif", fontSize: rev ? 22 : 20,
+                color: rev ? (isMarked ? 'var(--gold2)' : 'var(--text1)') : 'transparent',
+                background: isMarked
+                  ? 'rgba(201,168,76,.18)'
+                  : rev ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.07)',
+                border: isMarked
+                  ? '1px solid var(--gold)'
+                  : '1px solid rgba(255,255,255,.18)',
+                minWidth: rev ? 0 : 34, textAlign:'center', cursor:'pointer',
+                transition:'all .15s ease'
+              }}
+            >
+              {rev ? w : '▪▪▪'}
+            </span>
           );
         })}
       </div>
