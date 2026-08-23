@@ -7,7 +7,7 @@ import "./App.css";
 
 import {
   store, sel, uiActions, quranActions, playerActions,
-  learnActions, collectionsActions, setLDataThunk
+  learnActions, collectionsActions, goalsActions, setLDataThunk
 } from "./store";
 
 import { SURAH_NAMES, RECITATORS } from "./utils/quranData";
@@ -54,6 +54,8 @@ function AppInner({ currentUser, onSignOut }) {
   const lastAyatBySurah = useSelector(sel.lastAyatBySurah, shallowEqual);
   const learnData       = useSelector(sel.learnData, shallowEqual);
   const collections     = useSelector(sel.collections, shallowEqual);
+  const goals           = useSelector(sel.goals);
+  const activity        = useSelector(sel.activity);
 
   const sidebarOpen     = useSelector(sel.sidebarOpen);
   const location        = useLocation();
@@ -241,7 +243,7 @@ function AppInner({ currentUser, onSignOut }) {
                   toggleVoice={() => setListening(v => !v)}
                 />
               } />
-              <Route path="/dashboard" element={<DashboardPage learnData={learnData} surahs={surahs} onNavigate={handleNavigateFromPages} goals={{}} activity={{}} onSetGoal={() => {}} onRecordActivity={() => {}} />} />
+              <Route path="/dashboard" element={<DashboardPage learnData={learnData} surahs={surahs} onNavigate={handleNavigateFromPages} goals={goals} activity={activity} onSetGoal={(key, value) => dispatch(goalsActions.setGoal({ key, value }))} onRecordActivity={(data) => dispatch(goalsActions.recordActivity(data))} />} />
               <Route path="/prononciation" element={<PrononciationPage />} />
               <Route path="/collections" element={<CollectionsPage collections={collections} learnData={learnData} setLData={handleSetLData} onCreateCollection={name => dispatch(collectionsActions.createCollection({ name }))} onDeleteCollection={id => dispatch(collectionsActions.deleteCollection(id))} onToggleAyat={(collId, sNum, aNum) => dispatch(collectionsActions.toggleAyatInCollection({ collectionId: collId, item: { surahNum: sNum, ayatNum: aNum } }))} surahs={surahs} onNavigate={handleNavigateFromPages} initialSearchQuery={pendingSearchQuery} onConsumeSearchQuery={() => setPendingSearchQuery(null)} />} />
               <Route path="/concordance" element={<ConcordancePage surahs={surahs} onNavigate={handleNavigateFromPages} collections={collections} />} />
