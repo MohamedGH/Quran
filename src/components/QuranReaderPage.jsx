@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -10,7 +10,7 @@ import ArabicHighlighted from "./ArabicHighlighted";
 import Submenu from "./Submenu";
 import TsGlobalBar from "./TsGlobalBar";
 import MainPlayer from "./MainPlayer";
-import { fetchSurahSimple, getAudioBase, setGlobalRecitator, markBitrateBad, bitrateOrderFor, setReciterBitrate } from "../services/quranApi";
+import { getAudioBase, setGlobalRecitator, markBitrateBad } from "../services/quranApi";
 
 export default function QuranReaderPage({
   currentUser,
@@ -55,9 +55,6 @@ export default function QuranReaderPage({
   // Local component states
   const [pageMode, setPageMode]             = useState(false);
   const [activePageCoran, setActivePageCoran] = useState(null);
-  const [showSurahInfo, setShowSurahInfo]   = useState(false);
-  const [showGoToAyat, setShowGoToAyat]     = useState(false);
-  const [goToInput, setGoToInput]         = useState("");
   const [recitatorId, setRecitatorId]       = useState(() => { try { return localStorage.getItem('quran_recitator') || 'ar.alafasy'; } catch { return 'ar.alafasy'; } });
   const [bitrateVersion, setBitrateVersion] = useState(0);
 
@@ -155,6 +152,14 @@ export default function QuranReaderPage({
     if (!isNaN(e) && e >= s && e < ayats.length) dispatch(playerActions.setLoopEnd(e));
   };
 
+  const pages = useMemo(() => [...new Set(ayats.map(a => a.page).filter(Boolean))].sort((a,b)=>a-b), [ayats]);
+
+  const filteredAyats = useMemo(() => {
+    if (!pageMode || pages.length === 0) return ayats;
+    const curPage = activePageCoran ?? ayats[mainAyatIdx]?.page ?? pages[0];
+    return ayats.filter(a => a.page === curPage);
+  }, [pageMode, pages, activePageCoran, ayats, mainAyatIdx]);
+
   if (!selectedSurah) {
     return (
       <div className="empty-state">
@@ -241,6 +246,39 @@ export default function QuranReaderPage({
         </div>
       </div>
 
+      {/* Page mode top navigation bar */}
+      {pageMode && pages.length > 0 && (() => {
+        const curPage = activePageCoran ?? ayats[mainAyatIdx]?.page ?? pages[0];
+        const idx = pages.indexOf(curPage);
+        return (
+          <div style={{
+            display:'flex', alignItems:'center', justifyContent:'space-between',
+            padding:'6px 14px', background:'var(--surface2)', borderBottom:'1px solid var(--border)',
+            position:'sticky', top:0, zIndex:10, gap:8
+          }}>
+            <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+              <button onClick={() => setActivePageCoran(pages[0])} disabled={idx<=0}
+                style={{ fontSize:11, padding:'3px 7px', fontFamily:"'Cinzel',serif", background:'transparent', border:'1px solid var(--border2)', color: idx>0 ? 'var(--text2)' : 'var(--text3)', borderRadius:6, cursor: idx>0 ? 'pointer' : 'default', lineHeight:1 }}>⏮</button>
+              <button onClick={() => setActivePageCoran(pages[idx-1])} disabled={idx<=0}
+                style={{ fontSize:8, letterSpacing:1, padding:'3px 10px', fontFamily:"'Cinzel',serif", background:'transparent', border:'1px solid var(--border2)', color: idx>0 ? 'var(--text2)' : 'var(--text3)', borderRadius:6, cursor: idx>0 ? 'pointer' : 'default' }}>← {idx>0 ? pages[idx-1] : ''}</button>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ fontSize:7, letterSpacing:2, color:'var(--text3)', fontFamily:"'Cinzel',serif" }}>PAGE</span>
+              <input type="number" value={curPage}
+                onChange={e => { const v=parseInt(e.target.value); if(pages.includes(v)) setActivePageCoran(v); }}
+                style={{ width:48, textAlign:'center', background:'var(--surface3)', border:'1px solid #c878ff', borderRadius:6, padding:'3px 6px', color:'#c878ff', fontSize:13, fontFamily:"'Cinzel',serif", outline:'none' }} />
+              <span style={{ fontSize:7, color:'var(--text3)' }}>/ {pages[pages.length-1]}</span>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+              <button onClick={() => setActivePageCoran(pages[idx+1])} disabled={idx>=pages.length-1}
+                style={{ fontSize:8, letterSpacing:1, padding:'3px 10px', fontFamily:"'Cinzel',serif", background:'transparent', border:'1px solid var(--border2)', color: idx<pages.length-1 ? 'var(--text2)' : 'var(--text3)', borderRadius:6, cursor: idx<pages.length-1 ? 'pointer' : 'default' }}>{idx<pages.length-1 ? pages[idx+1] : ''} →</button>
+              <button onClick={() => setActivePageCoran(pages[pages.length-1])} disabled={idx>=pages.length-1}
+                style={{ fontSize:11, padding:'3px 7px', fontFamily:"'Cinzel',serif", background:'transparent', border:'1px solid var(--border2)', color: idx<pages.length-1 ? 'var(--text2)' : 'var(--text3)', borderRadius:6, cursor: idx<pages.length-1 ? 'pointer' : 'default', lineHeight:1 }}>⏭</button>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* TsGlobalBar */}
       <TsGlobalBar
         showTsBar={showTsBar}
@@ -259,10 +297,11 @@ export default function QuranReaderPage({
 
       {/* Ayat scroll list */}
       <div className="ayat-scroll">
-        {(ayats || []).map((a, idx) => {
+        {(filteredAyats || []).map((a) => {
           const isPlaying = playingAyatNum === a.numberInSurah;
           const isOpen = openAyatNum === a.numberInSurah;
           const ld = learnData[`${selectedSurah.number}:${a.numberInSurah}`] || {};
+          const fullIdx = ayats.findIndex(item => item.numberInSurah === a.numberInSurah);
 
           return (
             <div
@@ -279,10 +318,35 @@ export default function QuranReaderPage({
                   }
                 }}
               >
-                <div className="ayat-number-badge">{a.numberInSurah}</div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, flexShrink: 0 }}>
+                  <div className="ayat-number-badge">{a.numberInSurah}</div>
+                  <button
+                    title="Lire depuis ce verset"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (fullIdx >= 0) {
+                        playMainAyat(fullIdx);
+                      }
+                    }}
+                    style={{
+                      width: 22, height: 22, borderRadius: "50%", border: "none",
+                      background: isPlaying ? "var(--teal)" : "rgba(62,184,160,.15)",
+                      color: isPlaying ? "#fff" : "var(--teal2)",
+                      fontSize: 9, cursor: "pointer", display: "flex", alignItems: "center",
+                      justifyContent: "center", flexShrink: 0, transition: "all .15s",
+                      outline: isPlaying ? "2px solid var(--teal)" : "none",
+                      outlineOffset: 2,
+                    }}
+                  >
+                    ▶
+                  </button>
+                </div>
+
                 <div className="ayat-arabic">
                   <ArabicHighlighted
                     text={a.text}
+                    timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
+                    currentMs={isPlaying ? mainCurrentMs : 0}
                     showQalqala={showQalqala}
                     showMadd={showMadd}
                     showIzhar={showIzhar}

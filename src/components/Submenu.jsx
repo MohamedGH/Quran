@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
-import { TAJWEED_RULES, SAJDA_AYATS, PAGE_POSITION_LABELS } from "../utils/quranData";
-import { splitArabicWords, arabicRoot, splitArabicChars, isQalqala, getMaddType, isIzhar, isIdgham } from "../utils/arabicUtils";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { TAJWEED_RULES, SAJDA_AYATS } from "../utils/quranData";
+import { splitArabicWords, splitArabicChars, isQalqala, getMaddType, isIzhar, isIdgham } from "../utils/arabicUtils";
 import { AyatCollectionsTab } from "./pages/CollectionsPage";
 import EditorWords from "./EditorWords";
 import VoiceRecorder from "./VoiceRecorder";
@@ -14,6 +14,222 @@ export function AnimatedPage({ children, pageKey }) {
 export function AnimatedSubmenu({ isOpen, children }) {
   if (!isOpen) return null;
   return <div className="submenu-anim-wrap">{children}</div>;
+}
+
+export function useToRevise(ld, surahNum, ayatNum, setLData) {
+  const saveWithHistory = (nextRevise, prevRevise) => {
+    const now = new Date().toISOString();
+    setLData(surahNum, ayatNum, d => {
+      const hist = [...(d.reviseHistory || [])];
+      const wasActive = !!prevRevise;
+      const willBeActive = !!nextRevise;
+
+      if (!wasActive && willBeActive) {
+        hist.push({
+          startDate: now,
+          endDate: null,
+          words: typeof nextRevise === 'object' ? (nextRevise.words || []) : 'all',
+          parts: typeof nextRevise === 'object' ? (nextRevise.parts || []) : [],
+          chars: typeof nextRevise === 'object' ? (nextRevise.chars || {}) : {},
+        });
+      } else if (wasActive && !willBeActive) {
+        const lastOpen = [...hist].reverse().findIndex(e => !e.endDate);
+        if (lastOpen >= 0) {
+          const idx = hist.length - 1 - lastOpen;
+          hist[idx] = { ...hist[idx], endDate: now };
+        }
+      } else if (wasActive && willBeActive) {
+        const lastOpen = [...hist].reverse().findIndex(e => !e.endDate);
+        if (lastOpen >= 0) {
+          const idx = hist.length - 1 - lastOpen;
+          hist[idx] = {
+            ...hist[idx],
+            words: typeof nextRevise === 'object' ? (nextRevise.words || []) : 'all',
+            parts: typeof nextRevise === 'object' ? (nextRevise.parts || []) : [],
+            chars: typeof nextRevise === 'object' ? (nextRevise.chars || {}) : {},
+          };
+        } else {
+          hist.push({
+            startDate: now, endDate: null,
+            words: typeof nextRevise === 'object' ? (nextRevise.words || []) : 'all',
+            parts: typeof nextRevise === 'object' ? (nextRevise.parts || []) : [],
+            chars: typeof nextRevise === 'object' ? (nextRevise.chars || {}) : {},
+          });
+        }
+      }
+      return { ...d, toRevise: nextRevise, reviseHistory: hist };
+    });
+  };
+
+  const revise   = ld?.toRevise;
+  const isActive = !!revise;
+  const selWords = (revise && typeof revise === 'object') ? (revise.words || []) : [];
+  const selParts = (revise && typeof revise === 'object') ? (revise.parts || []) : [];
+  const selChars = (revise && typeof revise === 'object') ? (revise.chars || {}) : {};
+
+  const toggleAll = () => saveWithHistory(isActive ? false : true, revise);
+
+  const toggleWord = (i) => {
+    const cur = typeof revise === 'object' ? revise : {};
+    const prev = cur.words || [];
+    const exists = prev.includes(i);
+    const nextWords = exists ? prev.filter(x => x !== i) : [...prev, i];
+    const nextChars = { ...(cur.chars || {}) };
+    if (exists) delete nextChars[i];
+
+    if (nextWords.length === 0 && (cur.parts || []).length === 0) {
+      saveWithHistory(false, revise);
+      return false;
+    }
+    saveWithHistory({ ...cur, words: nextWords, chars: nextChars }, revise);
+    return !exists;
+  };
+
+  const toggleChar = (wi, ci) => {
+    const cur = typeof revise === 'object' ? revise : {};
+    const prevMap = cur.chars || {};
+    const prevList = prevMap[wi] || [];
+    const exists = prevList.includes(ci);
+    const nextList = exists ? prevList.filter(x => x !== ci) : [...prevList, ci];
+    const nextMap = { ...prevMap };
+
+    if (nextList.length === 0) delete nextMap[wi];
+    else nextMap[wi] = nextList;
+
+    const curWords = cur.words || [];
+    const nextWords = curWords.includes(wi) ? curWords : [...curWords, wi];
+
+    saveWithHistory({ ...cur, words: nextWords, chars: nextMap }, revise);
+  };
+
+  const togglePart = (pid) => {
+    const cur = typeof revise === 'object' ? revise : {};
+    const prev = cur.parts || [];
+    const exists = prev.includes(pid);
+    const nextParts = exists ? prev.filter(x => x !== pid) : [...prev, pid];
+
+    if (nextParts.length === 0 && (cur.words || []).length === 0) {
+      saveWithHistory(false, revise);
+      return;
+    }
+    saveWithHistory({ ...cur, parts: nextParts }, revise);
+  };
+
+  return { revise, isActive, selWords, selParts, selChars, toggleAll, toggleWord, toggleChar, togglePart };
+}
+
+export function ToRevisePanel({ ayat, surahNum, ld, setLData }) {
+  const [expandedWord, setExpandedWord] = useState(null);
+
+  const { isActive, selWords, selParts, selChars, toggleAll, toggleWord: toggleWordBase, toggleChar, togglePart } =
+    useToRevise(ld, surahNum, ayat.numberInSurah, setLData);
+
+  const ayatWords = ayat.text ? ayat.text.split(' ').filter(Boolean) : [];
+  const parts     = ld?.parts || [];
+
+  const toggleWord = (i) => {
+    const wasSelected = toggleWordBase(i);
+    if (wasSelected && expandedWord === i) setExpandedWord(null);
+  };
+
+  const splitChars = splitArabicChars;
+  const gold = 'var(--gold)'; const gold2 = 'var(--gold2)';
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:14, padding:'14px 16px' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div style={{ fontSize:9, letterSpacing:2, color:'var(--text3)' }}>🔖 MARQUER À RÉVISER</div>
+        <button onClick={toggleAll} style={{
+          fontSize:8, letterSpacing:1.5, padding:'4px 12px', borderRadius:6, cursor:'pointer',
+          fontFamily:"'Cinzel',serif", transition:'all .2s',
+          background: isActive ? 'rgba(201,168,76,.15)' : 'transparent',
+          border: `1px solid ${isActive ? gold : 'rgba(255,255,255,.15)'}`,
+          color: isActive ? gold2 : 'var(--text3)',
+        }}>{isActive ? '✓ MARQUÉ — RETIRER' : "MARQUER TOUT L'AYAT"}</button>
+      </div>
+
+      {ayatWords.length > 0 && (
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          <div style={{ fontSize:8, letterSpacing:1.5, color:'var(--text3)' }}>MOTS · LETTRES · HARAKAT</div>
+          <div style={{ direction:'rtl', display:'flex', flexWrap:'wrap', gap:6 }}>
+            {ayatWords.map((w, i) => {
+              const sel     = selWords.includes(i);
+              const expanded= expandedWord === i;
+              const charSel = selChars[i] || [];
+              return (
+                <div key={i} style={{ display:'flex', alignItems:'stretch', borderRadius:6, overflow:'hidden',
+                  border:`1px solid ${expanded ? '#5bc8f5' : sel ? gold : 'rgba(255,255,255,.1)'}`,
+                  background: sel ? 'rgba(201,168,76,.15)' : 'rgba(255,255,255,.03)' }}>
+                  <button onClick={() => toggleWord(i)} style={{
+                    fontFamily:"'Amiri Quran',serif", fontSize:18, padding:'4px 10px',
+                    background:'transparent', border:'none', cursor:'pointer',
+                    color: sel ? gold2 : 'var(--text2)' }}>{w}</button>
+                  <button onClick={() => setExpandedWord(expanded ? null : i)}
+                    style={{ padding:'0 7px', cursor:'pointer', border:'none',
+                      background: expanded ? 'rgba(91,200,245,.15)' : charSel.length > 0 ? 'rgba(91,200,245,.08)' : 'rgba(255,255,255,.04)',
+                      borderLeft:'1px solid rgba(255,255,255,.08)',
+                      color: expanded || charSel.length > 0 ? '#5bc8f5' : 'var(--text3)',
+                      fontSize:8, display:'flex', alignItems:'center' }}>
+                    {charSel.length > 0 ? charSel.length : ''}{expanded ? '▲' : '▾'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {expandedWord !== null && (() => {
+            const wi      = expandedWord;
+            const w       = ayatWords[wi] || '';
+            const clusters= splitChars(w);
+            const charSel = selChars[wi] || [];
+            return (
+              <div style={{ direction:'rtl', display:'flex', flexWrap:'wrap', gap:4,
+                padding:'8px 10px', background:'rgba(91,200,245,.06)',
+                border:'1px solid rgba(91,200,245,.2)', borderRadius:8 }}>
+                <div style={{ width:'100%', fontSize:7, letterSpacing:1.5, color:'#5bc8f5',
+                  fontFamily:"'Cinzel',serif", marginBottom:4, textAlign:'right' }}>
+                  LETTRES DE : {w}
+                </div>
+                {clusters.map((c, ci) => {
+                  const cSel = charSel.includes(ci);
+                  return (
+                    <button key={ci} onClick={() => toggleChar(wi, ci)} style={{
+                      fontFamily:"'Amiri Quran',serif", fontSize:22,
+                      padding:'4px 8px', minWidth:34, borderRadius:6, cursor:'pointer',
+                      background: cSel ? 'rgba(91,200,245,.2)' : 'rgba(255,255,255,.05)',
+                      border:`1px solid ${cSel ? '#5bc8f5' : 'rgba(255,255,255,.12)'}`,
+                      color: cSel ? '#5bc8f5' : 'var(--text1)',
+                      boxShadow: cSel ? '0 0 6px rgba(91,200,245,.35)' : 'none',
+                      transition:'all .12s' }}>{c}</button>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {parts.length > 0 && (
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          <div style={{ fontSize:8, letterSpacing:1.5, color:'var(--text3)' }}>PARTIES DE L'AYAT</div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+            {parts.map((p, pi) => {
+              const pSel = selParts.includes(p.id);
+              return (
+                <button key={p.id} onClick={() => togglePart(p.id)} style={{
+                  fontSize:9, letterSpacing:1, padding:'6px 12px', borderRadius:6, cursor:'pointer',
+                  fontFamily:"'Cinzel',serif", transition:'all .15s',
+                  background: pSel ? 'rgba(201,168,76,.15)' : 'rgba(255,255,255,.03)',
+                  border: `1px solid ${pSel ? gold : 'rgba(255,255,255,.1)'}`,
+                  color: pSel ? gold2 : 'var(--text2)',
+                }}>PARTIE {pi + 1}</button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function TajweedExercice({ ayat }) {
@@ -186,41 +402,6 @@ export function AideMemoireMode({ ayat, surahNum, ld, setLData, clickMode, setCl
           …{words.slice(-3).join(" ")}
         </div>
       </div>
-    </div>
-  );
-}
-
-export function RevisionEcritureMode({ ayat, surahNum, ld, setLData, spellCheck = false }) {
-  const [val, setVal]   = useState("");
-  const [show, setShow] = useState(false);
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ fontSize: 9, letterSpacing: 2, color: "var(--gold2)", fontFamily: "'Cinzel',serif" }}>
-        ✏ RÉVISION ÉCRITURE
-      </div>
-      <textarea
-        rows={3}
-        value={val}
-        onChange={e => setVal(e.target.value)}
-        placeholder="Écrivez le verset de mémoire…"
-        spellCheck={spellCheck}
-        style={{
-          width: "100%", background: "var(--surface3)", border: "1px solid var(--border2)",
-          borderRadius: 8, padding: 12, color: "var(--text)", fontFamily: "'Amiri Quran',serif",
-          fontSize: 20, direction: "rtl", outline: "none",
-        }}
-      />
-      <div style={{ display: "flex", gap: 8 }}>
-        <button className="btn-primary" onClick={() => setShow(!show)}>
-          {show ? "MASQUER CORRECTION" : "COMPARER AVEC L'ORIGINAL"}
-        </button>
-      </div>
-      {show && (
-        <div style={{ padding: 12, background: "var(--surface2)", borderRadius: 8, border: "1px solid var(--border)", fontFamily: "'Amiri Quran',serif", fontSize: 22, direction: "rtl" }}>
-          {ayat?.text}
-        </div>
-      )}
     </div>
   );
 }
@@ -460,19 +641,464 @@ export function LectureMode({ ayat, surahNum, audioUrl, isMainPlaying, timestamp
   );
 }
 
+function PartAudioPlayer({ part, words, timestamps, audioUrl, autoPlay, hideText }) {
+  const audioRef  = useRef(null);
+  const rafRef    = useRef(null);
+  const [playing,   setPlaying]   = useState(false);
+  const [looping,   setLooping]   = useState(true);
+  const [currentMs, setCurrentMs] = useState(0);
+
+  const fixChars = (chars) => {
+    const isDiac = ch => /[\u064B-\u065F\u0670]/.test(ch);
+    const res = [];
+    for (let i = 0; i < chars.length; i++) {
+      let ch = chars[i].char;
+      while (i + 1 < chars.length && isDiac(chars[i + 1].char)) {
+        i++;
+        ch += chars[i].char;
+      }
+      res.push({ char: ch, start: chars[i].start, end: chars[i].end });
+    }
+    return res;
+  };
+
+  const timeRange = useMemo(() => {
+    if (!timestamps?.words || !part.wordIndices?.length) return null;
+    let startMs = Infinity, endMs = -1;
+    part.wordIndices.forEach(wi => {
+      const w = timestamps.words[wi];
+      if (!w?.chars?.length) return;
+      const ws = w.chars[0].start;
+      const we = w.chars[w.chars.length - 1].end;
+      if (ws < startMs) startMs = ws;
+      if (we > endMs) endMs = we;
+    });
+    return startMs < Infinity ? { startMs, endMs } : null;
+  }, [timestamps, part.wordIndices]);
+
+  const stopRaf = useCallback(() => {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+  }, []);
+
+  const stop = useCallback(() => {
+    audioRef.current?.pause();
+    setPlaying(false);
+    setCurrentMs(0);
+    stopRaf();
+  }, [stopRaf]);
+
+  const play = useCallback((loop, fromMs) => {
+    const audio = audioRef.current;
+    if (!audio || !timeRange) return;
+    const startAt = fromMs ?? timeRange.startMs;
+    audio.currentTime = startAt / 1000;
+    audio.play().catch(() => {});
+    setPlaying(true);
+    stopRaf();
+    const tick = () => {
+      if (!audioRef.current) return;
+      const ms = audioRef.current.currentTime * 1000;
+      setCurrentMs(ms);
+      if (ms >= timeRange.endMs) {
+        if (loop) {
+          audioRef.current.currentTime = timeRange.startMs / 1000;
+          audioRef.current.play().catch(() => {});
+          rafRef.current = requestAnimationFrame(tick);
+        } else {
+          stop();
+        }
+      } else {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    };
+    rafRef.current = requestAnimationFrame(tick);
+  }, [timeRange, stop, stopRaf]);
+
+  const playFromWord = useCallback((wi) => {
+    if (!timestamps?.words) return;
+    const tsWord = timestamps.words[wi];
+    const fromMs = tsWord?.chars?.[0]?.start ?? null;
+    if (fromMs == null) return;
+    stop();
+    setTimeout(() => play(looping, fromMs), 20);
+  }, [timestamps, play, stop, looping]);
+
+  useEffect(() => () => { stopRaf(); audioRef.current?.pause(); }, [stopRaf]);
+  useEffect(() => { if (autoPlay && timeRange) { setTimeout(() => play(true), 80); } }, [autoPlay, !!timeRange]);
+
+  if (!timeRange) return (
+    <div style={{ fontSize:8, color:"var(--text3)", letterSpacing:1, padding:"4px 0" }}>
+      Aucun timestamp — chargez un fichier JSON dans l'onglet ÉCOUTER
+    </div>
+  );
+
+  const durationMs = timeRange.endMs - timeRange.startMs;
+  const progress   = durationMs > 0 ? Math.min(1, Math.max(0, (currentMs - timeRange.startMs) / durationMs)) : 0;
+
+  return (
+    <div>
+      <audio ref={audioRef} src={audioUrl} style={{ display:"none" }}
+        onEnded={() => { if (!looping) stop(); }} />
+      <div className="part-player-inline">
+        <button
+          className={`part-player-btn ${playing ? "stop" : "play"}`}
+          onClick={() => playing ? stop() : play(looping)}
+          title={playing ? "Arrêter" : "Lire cette partie"}>
+          {playing ? "⏹" : "▶"}
+        </button>
+        <button
+          className={`part-player-btn ${looping ? "loop-on" : "loop-off"}`}
+          onClick={() => {
+            const nl = !looping;
+            setLooping(nl);
+            if (playing) { stop(); setTimeout(() => play(nl), 40); }
+          }}
+          title={looping ? "Boucle activée" : "Activer la boucle"}>
+          🔁
+        </button>
+        <div className="part-player-chars" style={ hideText ? { filter:'blur(6px)', userSelect:'none', pointerEvents:'none', opacity:.4 } : {} }>
+          {timestamps?.words
+            ? part.wordIndices.map((wi, ii) => {
+                const tsWord = timestamps.words[wi];
+                return (
+                  <span key={ii} onClick={() => playFromWord(wi)} style={{ cursor:"pointer" }}>
+                    {fixChars(tsWord?.chars || [{ char: words[wi] || "", start:0, end:0 }]).map((c, ci) => {
+                      const active = playing && currentMs >= c.start && currentMs <= c.end;
+                      const done   = playing && currentMs > c.end;
+                      return <span key={ci} className={`char-span${active?" char-active":done?" char-done":""}`}>{c.char}</span>;
+                    })}
+                    {ii < part.wordIndices.length - 1 ? " " : ""}
+                  </span>
+                );
+              })
+            : <span>{part.text}</span>
+          }
+        </div>
+        <span className="part-player-dur">{(durationMs / 1000).toFixed(1)}s</span>
+      </div>
+      {playing && (
+        <div className="part-player-progress">
+          <div className="part-player-progress-fill" style={{ width:`${progress * 100}%` }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CreatePartFromAudio({ ayat, timestamps, audioUrl, existingWordIndices, initialSeekMs, onCreatePart }) {
+  const audioRef    = useRef(null);
+  const rafRef      = useRef(null);
+  const [currentMs, setCurrentMs] = useState(0);
+  const [playing, setPlaying]     = useState(false);
+  const [startMs, setStartMs]     = useState(null);
+  const [endMs,   setEndMs]       = useState(null);
+
+  const words = ayat.text ? ayat.text.split(" ").filter(Boolean) : [];
+  const stopRaf = () => { if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; } };
+
+  const onPlay  = () => {
+    const tick = () => {
+      if (audioRef.current) setCurrentMs(audioRef.current.currentTime * 1000);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    setPlaying(true);
+  };
+  const onPause = () => { stopRaf(); setPlaying(false); };
+  const onEnded = () => { stopRaf(); setPlaying(false); };
+
+  useEffect(() => () => stopRaf(), []);
+  useEffect(() => {
+    if (initialSeekMs == null || !audioRef.current) return;
+    audioRef.current.currentTime = initialSeekMs / 1000;
+    setCurrentMs(initialSeekMs);
+  }, [initialSeekMs]);
+
+  const coveredIndices = useMemo(() => {
+    if (startMs == null || endMs == null || !timestamps?.words) return [];
+    return timestamps.words
+      .map((w, wi) => {
+        const ws = w.chars?.[0]?.start ?? null;
+        const we = w.chars?.[w.chars.length - 1]?.end ?? null;
+        if (ws == null || we == null) return null;
+        if (we < startMs || ws > endMs) return null;
+        return wi;
+      })
+      .filter(wi => wi !== null && !existingWordIndices.has(wi));
+  }, [startMs, endMs, timestamps, existingWordIndices]);
+
+  const fmtMs = (ms) => ms == null ? "--:--.---"
+    : `${String(Math.floor(ms / 60000)).padStart(2,"0")}:${String(Math.floor((ms % 60000) / 1000)).padStart(2,"0")}.${String(Math.floor(ms % 1000)).padStart(3,"0")}`;
+
+  const captureStart = () => setStartMs(Math.round((audioRef.current?.currentTime ?? 0) * 1000));
+  const captureEnd   = () => setEndMs(Math.round((audioRef.current?.currentTime ?? 0) * 1000));
+
+  const canCreate = coveredIndices.length > 0;
+
+  const handleCreate = () => {
+    if (!canCreate) return;
+    const text = coveredIndices.map(wi => words[wi]).join(" ");
+    const newStart = endMs ?? 0;
+    onCreatePart({ wordIndices: coveredIndices, text });
+    setStartMs(newStart);
+    setEndMs(null);
+    if (audioRef.current) {
+      audioRef.current.currentTime = newStart / 1000;
+      setCurrentMs(newStart);
+    }
+  };
+
+  return (
+    <div className="cpa-wrap">
+      <div className="cpa-title">✂ CRÉER UNE PARTIE VIA L'AUDIO</div>
+      <audio
+        ref={audioRef} controls src={audioUrl}
+        style={{ width:"100%", marginBottom:2 }}
+        onPlay={onPlay} onPause={onPause} onEnded={onEnded}
+      />
+      <div className="cpa-controls">
+        <div className="cpa-marker">
+          <div className="cpa-marker-label">DÉBUT</div>
+          <div className={`cpa-marker-time${startMs != null ? " set" : ""}`}>{fmtMs(startMs)}</div>
+          <button className="cpa-btn-capture" onClick={captureStart}>
+            ⬤ MARQUER
+          </button>
+        </div>
+        <div style={{ fontSize:18, color:"var(--border2)", alignSelf:"center" }}>→</div>
+        <div className="cpa-marker">
+          <div className="cpa-marker-label">FIN</div>
+          <div className={`cpa-marker-time${endMs != null ? " set" : ""}`}>{fmtMs(endMs)}</div>
+          <button className="cpa-btn-capture" onClick={captureEnd}>
+            ⬤ MARQUER
+          </button>
+        </div>
+        <button className="cpa-btn-capture"
+          onClick={() => { setStartMs(null); setEndMs(null); }}
+          style={{ borderColor:"var(--border2)", color:"var(--text3)", background:"transparent" }}>
+          ↺ RESET
+        </button>
+      </div>
+
+      {timestamps?.words && (
+        <div className="cpa-preview">
+          {words.map((w, wi) => {
+            const inRange   = coveredIndices.includes(wi);
+            const isExist   = existingWordIndices.has(wi);
+            return (
+              <span key={wi} className={`cpa-preview-word${inRange ? " in-range" : ""}`}
+                style={isExist ? { opacity:.35 } : {}}>
+                {w}{" "}
+              </span>
+            );
+          })}
+        </div>
+      )}
+      <button className="cpa-create-btn" onClick={handleCreate} disabled={!canCreate}>
+        + CRÉER LA PARTIE ({coveredIndices.length} mot{coveredIndices.length !== 1 ? "s" : ""})
+      </button>
+    </div>
+  );
+}
+
+function PartItem({ part, pi, words, timestamps, audioUrl, update }) {
+  const [learningStep, setLearningStep] = useState(0);
+  const fakeAyat = useMemo(() => ({ text: part.text, numberInSurah: part.id }), [part.text, part.id]);
+
+  const STEPS = [
+    { label: '① ÉCOUTER',   color: '#5bc8f5', bg: 'rgba(91,200,245,.12)' },
+    { label: '② MÉMORISER', color: '#ffd166', bg: 'rgba(255,209,102,.12)' },
+    { label: '③ RÉCITER',   color: '#c878ff', bg: 'rgba(200,120,255,.12)' },
+    { label: '↺ RESET',     color: 'var(--text3)', bg: 'transparent' },
+  ];
+  const btnStep = learningStep < 3 ? STEPS[learningStep] : STEPS[3];
+  const advance = () => setLearningStep(s => s >= 3 ? 0 : s + 1);
+
+  return (
+    <div className={`part-item${part.learned ? " part-learned" : ""}`}>
+      <div className="part-header">
+        <div className="part-label">PARTIE {pi + 1} · {part.wordIndices?.length} MOTS</div>
+        <button onClick={advance} style={{
+          fontSize:8, letterSpacing:1, padding:'3px 10px', borderRadius:6, cursor:'pointer',
+          fontFamily:"'Cinzel',serif", transition:'all .2s',
+          background: btnStep.bg, border:`1px solid ${btnStep.color}`, color: btnStep.color,
+        }}>{btnStep.label}</button>
+        <button className={`btn-small${part.learned ? " done" : ""}`}
+          onClick={() => update(d => ({ ...d, parts: d.parts.map(p => p.id === part.id ? { ...p, learned: !p.learned } : p) }))}>
+          {part.learned ? "✓" : "APPRIS"}
+        </button>
+        <button className="btn-small" style={{ color:"var(--red)", borderColor:"var(--red)" }}
+          onClick={() => update(d => ({ ...d, parts: d.parts.filter(p => p.id !== part.id) }))}>✕</button>
+      </div>
+
+      {learningStep > 0 && (
+        <div style={{ display:'flex', gap:4, padding:'4px 12px 0' }}>
+          {STEPS.slice(0,3).map((s,i) => (
+            <div key={i} style={{ flex:1, height:3, borderRadius:2, transition:'background .3s',
+              background: i < learningStep ? s.color : 'rgba(255,255,255,.08)' }} />
+          ))}
+        </div>
+      )}
+
+      {learningStep < 3 && (
+        <div style={{ padding: learningStep === 0 ? "0 12px 10px" : "6px 12px 6px" }}>
+          <PartAudioPlayer
+            key={`step-${learningStep}`}
+            part={part} words={words} timestamps={timestamps} audioUrl={audioUrl}
+            autoPlay={learningStep > 0}
+            hideText={learningStep === 2}
+          />
+        </div>
+      )}
+
+      {learningStep === 2 && (
+        <div style={{ margin:'0 12px 8px', padding:'8px', borderRadius:6,
+          background:'rgba(255,209,102,.04)', border:'1px dashed rgba(255,209,102,.2)',
+          textAlign:'center', fontSize:8, letterSpacing:2, color:'rgba(255,209,102,.35)',
+          fontFamily:"'Cinzel',serif" }}>
+          TEXTE MASQUÉ — RÉCITEZ DE MÉMOIRE
+        </div>
+      )}
+
+      {learningStep === 3 && (
+        <div style={{ padding:"4px 12px 12px" }}>
+          <RecitationChecker ayat={fakeAyat} attempts={part.recitAttempts||[]} saveScore={s => update(d => ({
+            ...d, parts: d.parts.map(p => {
+              if (p.id !== part.id) return p;
+              const prev    = p.recitAttempts || [];
+              const merged  = [...prev, s];
+              const bestIdx = merged.reduce((bi, a, i) => a.score > merged[bi].score ? i : bi, 0);
+              const kept    = [...new Set([0, bestIdx, merged.length-1])].sort((a,b)=>a-b).map(i => merged[i]);
+              return { ...p, recitAttempts: kept, ...(s.score === 100 ? { learned: true } : {}) };
+            })
+          }))} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ApprentissageMode({ ayat, surahNum, ld, setLData, timestamps, audioUrl, isSelectingThisAyat, partSelectStep, onStartPartCreate, clickMode, setClickMode }) {
+  const words  = ayat.text ? ayat.text.split(" ").filter(Boolean) : [];
   const update = fn => setLData(surahNum, ayat.numberInSurah, fn);
+  const allWordsLearned = words.length > 0 && words.every((_, i) => ld.wordsLearned?.[i]);
+  const allPartsLearned = ld.parts?.length > 0 && ld.parts.every(p => p.learned);
+
+  useEffect(() => {
+    if ((allWordsLearned || allPartsLearned) && !ld.learned) {
+      update(d => ({ ...d, learned: true }));
+    }
+  }, [allWordsLearned, allPartsLearned]);
+
+  const [showCreateAudio, setShowCreateAudio] = useState(false);
+  const [partsOpen, setPartsOpen] = useState(false);
+
+  const wordsInParts = useMemo(() => {
+    const s = new Set();
+    (ld.parts || []).forEach(p => p.wordIndices?.forEach(i => s.add(i)));
+    return s;
+  }, [ld.parts]);
+
+  const nextAvailStart = wordsInParts.size > 0 ? Math.max(...[...wordsInParts]) + 1 : 0;
+  const allWordsAssigned = nextAvailStart >= words.length;
+
+  const lastPartEndMs = useMemo(() => {
+    if (!timestamps?.words || wordsInParts.size === 0) return null;
+    const maxIdx = Math.max(...[...wordsInParts]);
+    const w = timestamps.words[maxIdx];
+    if (!w) return null;
+    return w.chars?.[w.chars.length - 1]?.end ?? null;
+  }, [timestamps, wordsInParts]);
+
+  const handleCreateFromAudio = ({ wordIndices, text }) => {
+    update(d => ({ ...d, parts: [...(d.parts || []), { id: Date.now(), wordIndices, text, learned: !!d.learned }] }));
+  };
 
   return (
     <div className="learn-section">
       <div className="learn-status-row">
         <div className={`learn-stat${ld.learned ? " learned-stat" : ""}`}>STATUT <span className="val">{ld.learned ? "✓ APPRIS" : "EN COURS"}</span></div>
         <div className="learn-stat">LECTURES <span className="val">{ld.readCount || 0}</span></div>
-        <button className={`btn-primary${ld.learned ? " active" : ""}`} onClick={() => update(d => ({ ...d, learned: !d.learned }))}>
-          {ld.learned ? "✓ APPRIS" : "MARQUER COMME APPRIS"}
-        </button>
+        <button className={`btn-primary${ld.learned ? " active" : ""}`} onClick={() => update(d => {
+          const newLearned = !d.learned;
+          return {
+            ...d,
+            learned: newLearned,
+            parts: newLearned ? (d.parts || []).map(p => ({ ...p, learned: true })) : d.parts,
+          };
+        })}>{ld.learned ? "✓ APPRIS" : "MARQUER COMME APPRIS"}</button>
+        {ld.parts?.length > 0 &&
+          <button className="btn-small" onClick={() => update(d => ({ ...d, parts: [], wordsLearned: {} }))}>RÉINITIALISER</button>}
       </div>
 
+      <div style={{ border:"1px solid var(--border)", borderRadius:8, overflow:"hidden" }}>
+        <button onClick={() => setPartsOpen(v => !v)} style={{
+          width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
+          padding:"8px 12px", background:"var(--surface2)", border:"none", cursor:"pointer",
+          fontFamily:"'Cinzel',serif"
+        }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontSize:9, letterSpacing:2, color:"var(--text3)" }}>PARTIES</span>
+            {ld.parts?.length > 0 && (
+              <span style={{ fontSize:8, padding:"2px 8px", borderRadius:10,
+                background: allPartsLearned ? "rgba(76,175,129,.15)" : "rgba(201,168,76,.1)",
+                color: allPartsLearned ? "var(--green)" : "var(--gold2)",
+                border:"1px solid " + (allPartsLearned ? "var(--green)" : "var(--gold)") }}>
+                {ld.parts.filter(p=>p.learned).length}/{ld.parts.length}
+              </span>
+            )}
+          </div>
+          <span style={{ fontSize:10, color:"var(--text3)", transition:"transform .2s",
+            display:"inline-block", transform: partsOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
+        </button>
+
+        {partsOpen && (
+          <div style={{ padding:"12px", display:"flex", flexDirection:"column", gap:8 }}>
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+              {!isSelectingThisAyat && !allWordsAssigned && (
+                <button className="btn-small" onClick={onStartPartCreate}>
+                  ✂ DÉCOUPER PAR MOTS
+                </button>
+              )}
+              {audioUrl && (
+                <button className="btn-small"
+                  style={showCreateAudio ? { borderColor:"var(--gold)", color:"var(--gold2)" } : {}}
+                  onClick={() => setShowCreateAudio(v => !v)}>
+                  🎵 CRÉER VIA AUDIO
+                </button>
+              )}
+            </div>
+
+            {isSelectingThisAyat && (
+              <div style={{ fontSize: 9, letterSpacing: 1.5, color: partSelectStep === 'start' ? "var(--gold2)" : "var(--teal2)", fontFamily: "'Cinzel',serif", padding: "4px 0" }}>
+                {partSelectStep === 'start' ? "① Cliquez le premier mot sur l'ayat ↑" : "② Cliquez le dernier mot sur l'ayat ↑"}
+              </div>
+            )}
+            {allWordsAssigned && ld.parts?.length > 0 && (
+              <div style={{ fontSize: 9, color: "var(--green)", letterSpacing: 1 }}>✓ Tous les mots sont découpés</div>
+            )}
+
+            {showCreateAudio && (
+              <CreatePartFromAudio
+                ayat={ayat}
+                timestamps={timestamps}
+                audioUrl={audioUrl}
+                existingWordIndices={wordsInParts}
+                initialSeekMs={lastPartEndMs}
+                onCreatePart={handleCreateFromAudio}
+              />
+            )}
+
+            {(ld.parts || []).map((part, pi) => (
+              <PartItem key={part.id} part={part} pi={pi} words={words} timestamps={timestamps} audioUrl={audioUrl} update={update} />
+            ))}
+            {ld.parts?.length === 0 && !isSelectingThisAyat && !showCreateAudio && (
+              <div style={{ fontSize: 9, color: "var(--text3)", letterSpacing: 1 }}>
+                Aucune partie — utilisez ✂ DÉCOUPER PAR MOTS ou 🎵 CRÉER VIA AUDIO
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       <RecitationChecker ayat={ayat} attempts={ld.recitAttempts||[]} saveScore={s => update(d => ({ ...d, recitAttempts: [...(d.recitAttempts||[]).slice(-49), s], ...(s.score === 100 ? { learned: true } : {}) }))} />
     </div>
   );
@@ -501,6 +1127,23 @@ export default function Submenu({
         <button className={`mode-btn${submenuMode === "infos" ? " active" : ""}`} onClick={() => setSubmenuMode("infos")}>ℹ INFOS</button>
         <button className={`mode-btn${submenuMode === "memoire" ? " active" : ""}`} onClick={() => setSubmenuMode("memoire")}>📖 AIDE MÉMOIRE</button>
         <button className={`mode-btn${submenuMode === "tajweed" ? " active" : ""}`} onClick={() => setSubmenuMode("tajweed")}>☪ TAJWEED</button>
+        <button
+          onClick={() => setSubmenuMode(submenuMode === 'reviser' ? 'lecture' : 'reviser')}
+          title={ld.toRevise ? "Modifier marquage à réviser" : "Marquer à réviser"}
+          style={{
+            flexShrink:0, padding:"6px 10px", fontSize:13, cursor:"pointer",
+            background: ld.toRevise ? "rgba(201,168,76,.12)" : submenuMode === 'reviser' ? "rgba(255,255,255,.05)" : "transparent",
+            border:"none", borderBottom: ld.toRevise ? "2px solid var(--gold)" : submenuMode === 'reviser' ? "2px solid var(--text3)" : "2px solid transparent",
+            color: ld.toRevise ? "var(--gold2)" : submenuMode === 'reviser' ? "var(--text2)" : "var(--text3)",
+            transition:"all .15s",
+          }}>🔖</button>
+        <button onClick={() => onSetLoop?.()} style={{
+          flexShrink:0, padding:"6px 10px", fontSize:14, cursor:"pointer",
+          background: ayatLoopActive ? "rgba(62,184,160,.12)" : "transparent",
+          border: "none", borderBottom: ayatLoopActive ? "2px solid var(--teal)" : "2px solid transparent",
+          color: ayatLoopActive ? "var(--teal2)" : "var(--text3)",
+          transition:"all .15s",
+        }} title="Lire en boucle">↺</button>
       </div>
 
       <div className="submenu-content">
@@ -520,6 +1163,8 @@ export default function Submenu({
           ? <AideMemoireMode ayat={ayat} surahNum={surahNum} ld={ld} setLData={setLData} clickMode={aideMemoireClickMode} setClickMode={setAideMemoireClickMode} spellCheck={spellCheck} />
           : submenuMode === "tajweed"
           ? <TajweedExercice ayat={ayat} />
+          : submenuMode === "reviser"
+          ? <ToRevisePanel ayat={ayat} surahNum={surahNum} ld={ld} setLData={setLData} />
           : <AyatCollectionsTab
               surahNum={surahNum} ayatNum={ayat.numberInSurah}
               collections={collections}
