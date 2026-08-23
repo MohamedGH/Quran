@@ -32,10 +32,21 @@ export default function CloudSyncManager({ uid }) {
         addSyncLog("ok", `Données reçues (${Object.keys(cloudData.learnData || {}).length} sourates)`);
 
         if (cloudData.learnData) {
-          Object.entries(cloudData.learnData).forEach(([sn, ayats]) => {
-            Object.entries(ayats || {}).forEach(([an, data]) => {
-              dispatch(setLDataThunk(Number(sn), Number(an), () => data));
-            });
+          Object.entries(cloudData.learnData).forEach(([key, data]) => {
+            if (key.includes(":")) {
+              const [sn, an] = key.split(":").map(Number);
+              if (!isNaN(sn) && !isNaN(an) && data) {
+                dispatch(setLDataThunk(sn, an, () => data));
+              }
+            } else if (data && typeof data === "object") {
+              Object.entries(data).forEach(([an, item]) => {
+                const snNum = Number(key);
+                const anNum = Number(an);
+                if (!isNaN(snNum) && !isNaN(anNum) && item) {
+                  dispatch(setLDataThunk(snNum, anNum, () => item));
+                }
+              });
+            }
           });
         }
         if (cloudData.collections) {
@@ -108,10 +119,21 @@ export default function CloudSyncManager({ uid }) {
         if (d.deviceId && d.deviceId !== getDeviceId() && isInitialPullDone.current) {
           addSyncLog("info", `Mise à jour distante détectée (${d.deviceId}) — fusion...`);
           if (d.learnData) {
-            Object.entries(d.learnData).forEach(([sn, ayats]) => {
-              Object.entries(ayats || {}).forEach(([an, data]) => {
-                dispatch(setLDataThunk(Number(sn), Number(an), () => data));
-              });
+            Object.entries(d.learnData).forEach(([key, data]) => {
+              if (key.includes(":")) {
+                const [sn, an] = key.split(":").map(Number);
+                if (!isNaN(sn) && !isNaN(an) && data) {
+                  dispatch(setLDataThunk(sn, an, () => data));
+                }
+              } else if (data && typeof data === "object") {
+                Object.entries(data).forEach(([an, item]) => {
+                  const snNum = Number(key);
+                  const anNum = Number(an);
+                  if (!isNaN(snNum) && !isNaN(anNum) && item) {
+                    dispatch(setLDataThunk(snNum, anNum, () => item));
+                  }
+                });
+              }
             });
           }
           if (d.collections) dispatch(collectionsActions.setCollections(d.collections));

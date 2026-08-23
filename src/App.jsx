@@ -74,22 +74,33 @@ function AppInner({ currentUser, onSignOut }) {
   const urlSurahNum     = parseInt(urlSegs[1]);
   const urlAyatNum      = parseInt(urlSegs[2]);
 
+  // Sync URL → Redux (surah & ayat)
   useEffect(() => {
-    if (activePage === 'quran') {
-      const sn = (!isNaN(urlSurahNum) && urlSurahNum >= 1 && urlSurahNum <= 114) ? urlSurahNum : 1;
-      if (sn !== selectedSurah) {
-        dispatch(quranActions.setSelectedSurah(sn));
-      }
+    if (activePage !== 'quran') return;
+    const sn = (!isNaN(urlSurahNum) && urlSurahNum >= 1 && urlSurahNum <= 114) ? urlSurahNum : 1;
+    if (sn !== selectedSurah) {
+      dispatch(quranActions.setSelectedSurah(sn));
     }
-  }, [location.pathname, activePage, urlSurahNum, selectedSurah, dispatch]);
+    if (!isNaN(urlAyatNum) && urlAyatNum >= 1 && urlAyatNum !== openAyatNum) {
+      dispatch(quranActions.setOpenAyatNum(urlAyatNum));
+    }
+  }, [activePage, urlSurahNum, urlAyatNum, selectedSurah, openAyatNum, dispatch]);
 
+  // Sync Redux openAyatNum → URL
   useEffect(() => {
-    if (activePage === 'quran' && !isNaN(urlAyatNum) && urlAyatNum > 0) {
-      if (urlAyatNum !== openAyatNum) {
-        dispatch(quranActions.setOpenAyatNum(urlAyatNum));
+    if (activePage !== 'quran' || !selectedSurah) return;
+    if (openAyatNum != null) {
+      const target = `/quran/${selectedSurah}/${openAyatNum}`;
+      if (location.pathname !== target) {
+        navigate(target, { replace: true });
+      }
+    } else {
+      const target = `/quran/${selectedSurah}`;
+      if (location.pathname !== target && location.pathname !== `/quran/${selectedSurah}/`) {
+        navigate(target, { replace: true });
       }
     }
-  }, [location.pathname, activePage, urlAyatNum, openAyatNum, dispatch]);
+  }, [activePage, selectedSurah, openAyatNum, location.pathname, navigate]);
 
   const setActivePage = useCallback((page) => {
     if (page === 'quran') {
