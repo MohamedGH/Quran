@@ -418,6 +418,11 @@ export default function QuranReaderPage({
                     showIzhar={showIzhar}
                     showIdgham={showIdgham}
                     onWordClick={handleWordClick}
+                    ld={ld}
+                    partSelectAyat={partSelectAyat}
+                    partSelectStep={partSelectStep}
+                    partSelectStart={partSelectStart}
+                    ayatNum={a.numberInSurah}
                   />
                 </div>
               </div>

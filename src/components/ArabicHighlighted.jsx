@@ -2,39 +2,217 @@ import React, { useRef, useMemo, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { sel } from "../store";
 import { fixChars } from "../services/quranApi";
-import { isQalqala, getMaddType, isIzhar, isIdgham } from "../utils/arabicUtils";
+import { isQalqala, getMaddType, isIzhar, isIdgham, normalizeAr, arabicRoot } from "../utils/arabicUtils";
 
-export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHighlighted({ text, timestamps, currentMs, rangeStartMs, showQalqala, showMadd, showIzhar, showIdgham }, ref) {
-  if (!timestamps?.words) return <div className="ayat-arabic">{text}</div>;
+export const PART_COLORS = [
+  'rgba(91, 200, 245, 0.18)',
+  'rgba(255, 209, 102, 0.18)',
+  'rgba(200, 120, 255, 0.18)',
+  'rgba(76, 175, 129, 0.18)',
+  'rgba(255, 126, 179, 0.18)'
+];
 
-  const wordData = useMemo(() => timestamps.words.map(word => {
-    const wordArr = word.chars ? word.chars.map(x => x.char) : [];
-    const fixed = fixChars(word.chars || []);
-    return fixed.map((c, ci) => {
-      const isQalqalaOn = showQalqala && isQalqala(wordArr, ci);
-      const maddType    = showMadd ? getMaddType(wordArr, ci) : null;
-      const izharOn     = showIzhar && isIzhar(wordArr, ci);
-      const idghamOn    = showIdgham && isIdgham(wordArr, ci);
-      const tajStyle    = isQalqalaOn ? {color:'#5bc8f5',textShadow:'0 0 6px rgba(91,200,245,.5)'}
-                        : maddType === 'muttasil' ? {color:'#ff7eb3',textShadow:'0 0 8px rgba(255,126,179,.6)',fontWeight:600}
-                        : maddType === 'normal'   ? {color:'#f09de0',textShadow:'0 0 6px rgba(240,157,224,.5)'}
-                        : izharOn                 ? {color:'#4caf81',textShadow:'0 0 6px rgba(76,175,129,.5)'}
-                        : idghamOn                ? {color:'#ffd166',textShadow:'0 0 6px rgba(255,209,102,.5)'}
-                        : undefined;
-      return { char: c.char, start: c.start, end: c.end, tajStyle };
+export const PART_BORDERS = [
+  '#5bc8f5',
+  '#ffd166',
+  '#c878ff',
+  '#4caf81',
+  '#ff7eb3'
+];
+
+export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHighlighted({
+  text,
+  timestamps,
+  currentMs,
+  rangeStartMs,
+  showQalqala,
+  showMadd,
+  showIzhar,
+  showIdgham,
+  onWordClick,
+  ld,
+  partSelectAyat,
+  partSelectStep,
+  partSelectStart,
+  ayatNum
+}, ref) {
+  const words = useMemo(() => text ? text.split(" ").filter(Boolean) : [], [text]);
+
+  const wordPartMap = useMemo(() => {
+    if (!ld?.parts || ld.parts.length === 0) return {};
+    const map = {};
+    ld.parts.forEach((part, pi) => {
+      (part.wordIndices || []).forEach((wi, iInPart) => {
+        map[wi] = {
+          partId: part.id,
+          partIndex: pi,
+          isFirst: iInPart === 0,
+          isLast: iInPart === (part.wordIndices.length - 1),
+          learned: part.learned,
+          color: PART_COLORS[pi % PART_COLORS.length],
+          border: PART_BORDERS[pi % PART_BORDERS.length]
+        };
+      });
     });
-  }), [timestamps, showQalqala, showMadd, showIzhar, showIdgham]);
+    return map;
+  }, [ld?.parts]);
+
+  const wordsInParts = useMemo(() => {
+    const s = new Set();
+    (ld?.parts || []).forEach(p => p.wordIndices?.forEach(i => s.add(i)));
+    return s;
+  }, [ld?.parts]);
+
+  const nextAvail = wordsInParts.size > 0 ? Math.max(...[...wordsInParts]) + 1 : 0;
+
+  const highlightedSet = useMemo(() => {
+    if (!ld?.highlight?.trim()) return new Set();
+    const list = ld.highlight.trim().split(/\s+/).map(normalizeAr);
+    const set = new Set();
+    words.forEach((w, wi) => {
+      if (list.includes(normalizeAr(w))) set.add(wi);
+    });
+    return set;
+  }, [ld?.highlight, words]);
+
+  const unknownSet = useMemo(() => {
+    if (!ld?.unknownWords || ld.unknownWords.length === 0) return new Set();
+    const manualSet = new Set(ld.unknownWords);
+    const manualRoots = new Set([...manualSet].map(i => arabicRoot(words[i] || '')).filter(Boolean));
+    const fullSet = new Set(manualSet);
+    words.forEach((w, i) => {
+      if (!manualSet.has(i) && manualRoots.has(arabicRoot(w))) {
+        fullSet.add(i);
+      }
+    });
+    return fullSet;
+  }, [ld?.unknownWords, words]);
+
+  const wordData = useMemo(() => {
+    if (timestamps?.words) {
+      return timestamps.words.map(word => {
+        const wordArr = word.chars ? word.chars.map(x => x.char) : [];
+        const fixed = fixChars(word.chars || []);
+        return fixed.map((c, ci) => {
+          const isQalqalaOn = showQalqala && isQalqala(wordArr, ci);
+          const maddType    = showMadd ? getMaddType(wordArr, ci) : null;
+          const izharOn     = showIzhar && isIzhar(wordArr, ci);
+          const idghamOn    = showIdgham && isIdgham(wordArr, ci);
+          const tajStyle    = isQalqalaOn ? {color:'#5bc8f5',textShadow:'0 0 6px rgba(91,200,245,.5)'}
+                            : maddType === 'muttasil' ? {color:'#ff7eb3',textShadow:'0 0 8px rgba(255,126,179,.6)',fontWeight:600}
+                            : maddType === 'normal'   ? {color:'#f09de0',textShadow:'0 0 6px rgba(240,157,224,.5)'}
+                            : izharOn                 ? {color:'#4caf81',textShadow:'0 0 6px rgba(76,175,129,.5)'}
+                            : idghamOn                ? {color:'#ffd166',textShadow:'0 0 6px rgba(255,209,102,.5)'}
+                            : undefined;
+          return { char: c.char, start: c.start, end: c.end, tajStyle };
+        });
+      });
+    }
+
+    return words.map(w => [{ char: w, start: 0, end: 0, tajStyle: undefined }]);
+  }, [timestamps, words, showQalqala, showMadd, showIzhar, showIdgham]);
+
+  const isSelectingThisAyat = partSelectAyat === ayatNum;
 
   return (
-    <div className="ayat-arabic" ref={ref}>
-      {wordData.map((chars, wi) => (
-        <span key={wi}>
-          {chars.map((c, ci) => (
-            <span key={ci} className="char-span" style={c.tajStyle}>{c.char}</span>
-          ))}
-          {wi < wordData.length - 1 ? ' ' : ''}
-        </span>
-      ))}
+    <div className="ayat-arabic" ref={ref} style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '4px', direction: 'rtl', alignItems: 'center' }}>
+      {wordData.map((chars, wi) => {
+        const partInfo = wordPartMap[wi];
+        const isHighlighted = highlightedSet.has(wi);
+        const isUnknown = unknownSet.has(wi);
+
+        let isSelectedForPart = false;
+        let isDisabledForPart = false;
+
+        if (isSelectingThisAyat) {
+          if (partSelectStep === 'start') {
+            if (wi < nextAvail) isDisabledForPart = true;
+            else if (partSelectStart === wi) isSelectedForPart = true;
+          } else if (partSelectStep === 'end') {
+            if (wi < nextAvail) isDisabledForPart = true;
+            else if (partSelectStart != null) {
+              const minI = Math.min(partSelectStart, wi);
+              const maxI = Math.max(partSelectStart, wi);
+              if (wi >= minI && wi <= maxI) isSelectedForPart = true;
+            }
+          }
+        }
+
+        const wordStyle = {
+          position: 'relative',
+          display: 'inline-flex',
+          alignItems: 'center',
+          padding: '2px 5px',
+          borderRadius: '4px',
+          transition: 'all 0.15s ease',
+          cursor: onWordClick ? 'pointer' : 'default',
+          opacity: isDisabledForPart ? 0.4 : 1,
+          ...(partInfo ? {
+            background: partInfo.color,
+            borderTop: `1.5px solid ${partInfo.border}`,
+            borderBottom: `1.5px solid ${partInfo.border}`,
+            borderRight: partInfo.isFirst ? `1.5px solid ${partInfo.border}` : 'none',
+            borderLeft: partInfo.isLast ? `1.5px solid ${partInfo.border}` : 'none',
+            borderRadius: partInfo.isFirst && partInfo.isLast ? '6px'
+              : partInfo.isFirst ? '0 6px 6px 0'
+              : partInfo.isLast ? '6px 0 0 6px'
+              : '0'
+          } : {}),
+          ...(isHighlighted ? {
+            background: 'rgba(255, 209, 102, 0.25)',
+            boxShadow: '0 0 8px rgba(255, 209, 102, 0.4)',
+            borderRadius: '4px'
+          } : {}),
+          ...(isUnknown ? {
+            borderBottom: '2px dotted #ff7eb3',
+            color: '#ff7eb3'
+          } : {}),
+          ...(isSelectedForPart ? {
+            background: 'rgba(91, 200, 245, 0.3)',
+            boxShadow: '0 0 8px rgba(91, 200, 245, 0.5)',
+            border: '1.5px dashed #5bc8f5',
+            borderRadius: '4px'
+          } : {})
+        };
+
+        return (
+          <span
+            key={wi}
+            className={`word-span${isSelectedForPart ? ' word-selecting' : ''}`}
+            style={wordStyle}
+            onClick={(e) => {
+              if (onWordClick) {
+                e.stopPropagation();
+                onWordClick(wi);
+              }
+            }}
+          >
+            {partInfo && partInfo.isFirst && (
+              <span
+                className="part-badge"
+                style={{
+                  fontSize: '8px',
+                  fontFamily: "'Cinzel', serif",
+                  fontWeight: 'bold',
+                  background: partInfo.border,
+                  color: '#111',
+                  padding: '1px 4px',
+                  borderRadius: '3px',
+                  marginLeft: '4px',
+                  lineHeight: 1,
+                  display: 'inline-block',
+                  userSelect: 'none'
+                }}
+              >
+                P{partInfo.partIndex + 1}
+              </span>
+            )}
+            {chars.map((c, ci) => (
+              <span key={ci} className="char-span" style={c.tajStyle}>{c.char}</span>
+            ))}
+          </span>
+        );
+      })}
     </div>
   );
 }), (prev, next) =>
@@ -44,11 +222,16 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
   prev.showQalqala === next.showQalqala &&
   prev.showMadd === next.showMadd &&
   prev.showIzhar === next.showIzhar &&
-  prev.showIdgham === next.showIdgham
+  prev.showIdgham === next.showIdgham &&
+  prev.ld === next.ld &&
+  prev.partSelectAyat === next.partSelectAyat &&
+  prev.partSelectStep === next.partSelectStep &&
+  prev.partSelectStart === next.partSelectStart
 );
 
 export const PlayingArabicHighlighted = React.memo(function PlayingArabicHighlighted({
-  text, timestamps, mode, playingPart, ld, showQalqala, showMadd, showIzhar, showIdgham
+  text, timestamps, mode, playingPart, ld, showQalqala, showMadd, showIzhar, showIdgham,
+  onWordClick, partSelectAyat, partSelectStep, partSelectStart, ayatNum
 }) {
   const mainCurrentMs = useSelector(sel.mainCurrentMs);
   const partCurrentMs = useSelector(sel.partCurrentMs);
@@ -103,7 +286,9 @@ export const PlayingArabicHighlighted = React.memo(function PlayingArabicHighlig
 
   return <ArabicHighlighted ref={containerRef} text={text} timestamps={timestamps}
     currentMs={-1} showQalqala={showQalqala} showMadd={showMadd}
-    showIzhar={showIzhar} showIdgham={showIdgham} />;
+    showIzhar={showIzhar} showIdgham={showIdgham}
+    onWordClick={onWordClick} ld={ld} partSelectAyat={partSelectAyat}
+    partSelectStep={partSelectStep} partSelectStart={partSelectStart} ayatNum={ayatNum} />;
 }, (prev, next) =>
   prev.text === next.text &&
   prev.timestamps === next.timestamps &&
@@ -111,7 +296,11 @@ export const PlayingArabicHighlighted = React.memo(function PlayingArabicHighlig
   prev.showQalqala === next.showQalqala &&
   prev.showMadd === next.showMadd &&
   prev.showIzhar === next.showIzhar &&
-  prev.showIdgham === next.showIdgham
+  prev.showIdgham === next.showIdgham &&
+  prev.ld === next.ld &&
+  prev.partSelectAyat === next.partSelectAyat &&
+  prev.partSelectStep === next.partSelectStep &&
+  prev.partSelectStart === next.partSelectStart
 );
 
 export default ArabicHighlighted;

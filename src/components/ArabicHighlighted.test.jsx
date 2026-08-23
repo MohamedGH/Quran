@@ -8,4 +8,14 @@ describe('ArabicHighlighted Component Tests', () => {
     render(<ArabicHighlighted text="بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ" />);
     expect(screen.getByText(/بِسْمِ/)).toBeInTheDocument();
   });
+
+  it('renders part badges when ld parts are passed', () => {
+    const ld = {
+      parts: [
+        { id: 1, wordIndices: [0, 1], text: 'بِسْمِ اللَّهِ' }
+      ]
+    };
+    render(<ArabicHighlighted text="بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ" ld={ld} />);
+    expect(screen.getByText('P1')).toBeInTheDocument();
+  });
 });
