@@ -977,7 +977,7 @@ function PartItem({ part, pi, words, timestamps, audioUrl, update }) {
   );
 }
 
-export function ApprentissageMode({ ayat, surahNum, ld, setLData, timestamps, audioUrl, isSelectingThisAyat, partSelectStep, onStartPartCreate, clickMode, setClickMode }) {
+export function ApprentissageMode({ ayat, surahNum, ld, setLData, timestamps, audioUrl, isSelectingThisAyat, partSelectStep, onStartPartCreate, onCancelPartCreate, clickMode, setClickMode }) {
   const words  = ayat.text ? ayat.text.split(" ").filter(Boolean) : [];
   const update = fn => setLData(surahNum, ayat.numberInSurah, fn);
   const allWordsLearned = words.length > 0 && words.every((_, i) => ld.wordsLearned?.[i]);
@@ -990,7 +990,11 @@ export function ApprentissageMode({ ayat, surahNum, ld, setLData, timestamps, au
   }, [allWordsLearned, allPartsLearned]);
 
   const [showCreateAudio, setShowCreateAudio] = useState(false);
-  const [partsOpen, setPartsOpen] = useState(false);
+  const [partsOpen, setPartsOpen] = useState(() => isSelectingThisAyat || false);
+
+  useEffect(() => {
+    if (isSelectingThisAyat) setPartsOpen(true);
+  }, [isSelectingThisAyat]);
 
   const wordsInParts = useMemo(() => {
     const s = new Set();
@@ -1069,8 +1073,17 @@ export function ApprentissageMode({ ayat, surahNum, ld, setLData, timestamps, au
             </div>
 
             {isSelectingThisAyat && (
-              <div style={{ fontSize: 9, letterSpacing: 1.5, color: partSelectStep === 'start' ? "var(--gold2)" : "var(--teal2)", fontFamily: "'Cinzel',serif", padding: "4px 0" }}>
-                {partSelectStep === 'start' ? "① Cliquez le premier mot sur l'ayat ↑" : "② Cliquez le dernier mot sur l'ayat ↑"}
+              <div className="create-mode-hint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>
+                  {partSelectStep === 'start' ? "① Cliquez le premier mot sur l'ayat ↑" : "② Cliquez le dernier mot sur l'ayat ↑"}
+                </span>
+                <button
+                  className="btn-small"
+                  onClick={onCancelPartCreate}
+                  style={{ color: 'var(--red)', borderColor: 'var(--red)', padding: '2px 8px', fontSize: 8 }}
+                >
+                  ✕ ANNULER
+                </button>
               </div>
             )}
             {allWordsAssigned && ld.parts?.length > 0 && (
@@ -1202,7 +1215,7 @@ export function ApprentissageMode({ ayat, surahNum, ld, setLData, timestamps, au
 export default function Submenu({
   ayat, surahNum, ld, setLData, submenuMode, setSubmenuMode,
   audioUrl, isMainPlaying, timestamps, onLoadTimestamps, onUpdateTimestamps,
-  onLocalPlay, partSelectAyat, partSelectStep, onStartPartCreate, collections,
+  onLocalPlay, partSelectAyat, partSelectStep, onStartPartCreate, onCancelPartCreate, collections,
   ayatInCollections, onOpenCollModal, aideMemoireClickMode, setAideMemoireClickMode,
   spellCheck, onSetLoop, ayatLoopActive
 }) {
@@ -1251,6 +1264,7 @@ export default function Submenu({
               isSelectingThisAyat={partSelectAyat === ayat.numberInSurah}
               partSelectStep={partSelectStep}
               onStartPartCreate={onStartPartCreate}
+              onCancelPartCreate={onCancelPartCreate}
               clickMode={aideMemoireClickMode} setClickMode={setAideMemoireClickMode} />
           : submenuMode === "infos"
           ? <InfoMode ayat={ayat} ld={ld} setLData={setLData} surahNum={surahNum} />

@@ -454,6 +454,11 @@ export default function QuranReaderPage({
                     setPartSelectStep('start');
                     setPartSelectStart(null);
                   }}
+                  onCancelPartCreate={() => {
+                    setPartSelectAyat(null);
+                    setPartSelectStep(null);
+                    setPartSelectStart(null);
+                  }}
                   collections={collections}
                   ayatInCollections={ayatInCollections(selectedSurah.number, a.numberInSurah)}
                   onOpenCollModal={() => setCollModal({ surahNum: selectedSurah.number, surahEn: selectedSurah.englishName, ayatNum: a.numberInSurah, text: a.text, number: a.number })}

@@ -58,4 +58,33 @@ describe('Submenu Component Functional Tests', () => {
 
     expect(screen.getByText('🔖 MARQUER À RÉVISER')).toBeInTheDocument();
   });
+
+  it('renders cancel button when part selection is active and triggers onCancelPartCreate', () => {
+    const onCancelMock = vi.fn();
+    render(
+      <Provider store={store}>
+        <Submenu
+          ayat={dummyAyat}
+          surahNum={1}
+          ld={{ learned: false }}
+          setLData={() => {}}
+          submenuMode="apprentissage"
+          setSubmenuMode={() => {}}
+          audioUrl="http://example.com/1.mp3"
+          partSelectAyat={1}
+          partSelectStep="start"
+          onCancelPartCreate={onCancelMock}
+          collections={[]}
+          ayatInCollections={[]}
+        />
+      </Provider>
+    );
+
+    expect(screen.getByText("① Cliquez le premier mot sur l'ayat ↑")).toBeInTheDocument();
+    const cancelBtn = screen.getByText('✕ ANNULER');
+    expect(cancelBtn).toBeInTheDocument();
+
+    fireEvent.click(cancelBtn);
+    expect(onCancelMock).toHaveBeenCalled();
+  });
 });
