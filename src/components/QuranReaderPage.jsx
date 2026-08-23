@@ -2,14 +2,15 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
-  sel, uiActions, quranActions, playerActions,
+  sel, uiActions, quranActions, playerActions, collectionsActions,
   setLDataThunk
 } from "../store";
-import { masteryColor } from "../utils/arabicUtils";
+import { masteryColor, normalizeAr, arabicRoot } from "../utils/arabicUtils";
 import ArabicHighlighted from "./ArabicHighlighted";
 import Submenu from "./Submenu";
 import TsGlobalBar from "./TsGlobalBar";
 import MainPlayer from "./MainPlayer";
+import { CollectionModal } from "./pages/CollectionsPage";
 import { getAudioBase, setGlobalRecitator, markBitrateBad } from "../services/quranApi";
 
 export default function QuranReaderPage({
@@ -57,6 +58,13 @@ export default function QuranReaderPage({
   const [activePageCoran, setActivePageCoran] = useState(null);
   const [recitatorId, setRecitatorId]       = useState(() => { try { return localStorage.getItem('quran_recitator') || 'ar.alafasy'; } catch { return 'ar.alafasy'; } });
   const [bitrateVersion, setBitrateVersion] = useState(0);
+
+  // Submenu state props
+  const [partSelectAyat, setPartSelectAyat] = useState(null);
+  const [partSelectStep, setPartSelectStep] = useState(null); // 'start' | 'end'
+  const [partSelectStart, setPartSelectStart] = useState(null);
+  const [aideMemoireClickModes, setAideMemoireClickModes] = useState({});
+  const [collModal, setCollModal]           = useState(null);
 
   const selectedSurah = (surahs || []).find(s => s.number === selectedSurahNum) || null;
   const currentMainAyat = ayats[mainAyatIdx] || null;
@@ -159,6 +167,11 @@ export default function QuranReaderPage({
     const curPage = activePageCoran ?? ayats[mainAyatIdx]?.page ?? pages[0];
     return ayats.filter(a => a.page === curPage);
   }, [pageMode, pages, activePageCoran, ayats, mainAyatIdx]);
+
+  const ayatInCollections = useCallback((sNum, aNum) => {
+    const key = `${sNum}:${aNum}`;
+    return collections.filter(c => (c.ayats || c.items || []).some(it => `${it.surahNum}:${it.ayatNum}` === key));
+  }, [collections]);
 
   if (!selectedSurah) {
     return (
@@ -302,6 +315,59 @@ export default function QuranReaderPage({
           const isOpen = openAyatNum === a.numberInSurah;
           const ld = learnData[`${selectedSurah.number}:${a.numberInSurah}`] || {};
           const fullIdx = ayats.findIndex(item => item.numberInSurah === a.numberInSurah);
+          const ayatWords = a.text ? a.text.split(" ").filter(Boolean) : [];
+
+          const handleWordClick = (wi) => {
+            const aideMemoireClickMode = aideMemoireClickModes[a.numberInSurah] || null;
+            if (aideMemoireClickMode === 'highlight') {
+              const word = ayatWords[wi];
+              const prev = ld?.highlight?.trim() ? ld.highlight.trim().split(/\s+/) : [];
+              const normWord = normalizeAr(word);
+              const exists = prev.some(w => normalizeAr(w) === normWord);
+              const next = exists ? prev.filter(w => normalizeAr(w) !== normWord) : [...prev, word];
+              handleSetLData(selectedSurah.number, a.numberInSurah, d => ({ ...d, highlight: next.join(' ') }));
+              return;
+            }
+            if (aideMemoireClickMode === 'unknown') {
+              const rootClicked = arabicRoot(ayatWords[wi] || '');
+              const prev = ld?.unknownWords || [];
+              const isRemoving = prev.includes(wi);
+              const sameForm = ayatWords.reduce((acc, w, i) => { if (arabicRoot(w) === rootClicked) acc.push(i); return acc; }, []);
+              const next = isRemoving
+                ? prev.filter(x => !sameForm.includes(x))
+                : [...new Set([...prev, ...sameForm])];
+              handleSetLData(selectedSurah.number, a.numberInSurah, d => ({ ...d, unknownWords: next }));
+              return;
+            }
+            if (partSelectAyat === a.numberInSurah) {
+              const wordsInParts = new Set();
+              (ld.parts || []).forEach(p => p.wordIndices?.forEach(i => wordsInParts.add(i)));
+              const nextAvail = wordsInParts.size > 0 ? Math.max(...[...wordsInParts]) + 1 : 0;
+
+              if (partSelectStep === 'start') {
+                if (wi < nextAvail) return;
+                setPartSelectStart(wi);
+                setPartSelectStep('end');
+              } else if (partSelectStep === 'end') {
+                if (partSelectStart === null) return;
+                const from = Math.min(partSelectStart, wi);
+                const to   = Math.max(partSelectStart, wi);
+                const clampedFrom = Math.max(from, nextAvail);
+                const indices = []; for (let i = clampedFrom; i <= to; i++) indices.push(i);
+                if (indices.length === 0) return;
+                handleSetLData(selectedSurah.number, a.numberInSurah, d => ({
+                  ...d, parts: [...(d.parts || []), { id: Date.now(), wordIndices: indices, text: indices.map(i => ayatWords[i]).join(" "), learned: !!d.learned }]
+                }));
+                const newNext = to + 1;
+                if (newNext < ayatWords.length) {
+                  setPartSelectStart(null);
+                  setPartSelectStep('start');
+                } else {
+                  setPartSelectAyat(null); setPartSelectStep(null); setPartSelectStart(null);
+                }
+              }
+            }
+          };
 
           return (
             <div
@@ -351,6 +417,7 @@ export default function QuranReaderPage({
                     showMadd={showMadd}
                     showIzhar={showIzhar}
                     showIdgham={showIdgham}
+                    onWordClick={handleWordClick}
                   />
                 </div>
               </div>
@@ -364,13 +431,47 @@ export default function QuranReaderPage({
                   submenuMode={submenuMode}
                   setSubmenuMode={(m) => dispatch(quranActions.setSubmenuMode(m))}
                   audioUrl={`${getAudioBase()}/${a.number}.mp3`}
+                  isMainPlaying={isMainPlaying}
+                  timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
+                  onLoadTimestamps={(data) => {
+                    dispatch(playerActions.updateTimestamp({ [tskey(selectedSurah.number, a.numberInSurah)]: data }));
+                  }}
+                  onUpdateTimestamps={(data) => {
+                    dispatch(playerActions.updateTimestamp({ [tskey(selectedSurah.number, a.numberInSurah)]: data }));
+                  }}
+                  onLocalPlay={(ms) => {
+                    if (ms != null) dispatch(playerActions.setMainCurrentMs(ms));
+                  }}
+                  partSelectAyat={partSelectAyat}
+                  partSelectStep={partSelectStep}
+                  onStartPartCreate={() => {
+                    setPartSelectAyat(a.numberInSurah);
+                    setPartSelectStep('start');
+                    setPartSelectStart(null);
+                  }}
                   collections={collections}
+                  ayatInCollections={ayatInCollections(selectedSurah.number, a.numberInSurah)}
+                  onOpenCollModal={() => setCollModal({ surahNum: selectedSurah.number, surahEn: selectedSurah.englishName, ayatNum: a.numberInSurah, text: a.text, number: a.number })}
+                  aideMemoireClickMode={aideMemoireClickModes[a.numberInSurah] || null}
+                  setAideMemoireClickMode={(m) => setAideMemoireClickModes(prev => ({ ...prev, [a.numberInSurah]: m }))}
+                  onSetLoop={() => handleApplyLoopInput(a.numberInSurah, a.numberInSurah)}
+                  ayatLoopActive={loopActive && loopStart === fullIdx && loopEnd === fullIdx}
                 />
               )}
             </div>
           );
         })}
       </div>
+
+      {collModal && (
+        <CollectionModal
+          ayat={collModal}
+          collections={collections}
+          onToggle={(collId) => dispatch(collectionsActions.toggleAyatInCollection({ collId, ayatEntry: { surahNum: collModal.surahNum, ayatNum: collModal.ayatNum, text: collModal.text } }))}
+          onCreateAndAdd={(name) => dispatch(collectionsActions.createCollectionWithAyat({ name, ayatEntry: { surahNum: collModal.surahNum, ayatNum: collModal.ayatNum, text: collModal.text } }))}
+          onClose={() => setCollModal(null)}
+        />
+      )}
 
       {/* PERSISTENT AUDIO ELEMENT */}
       <audio

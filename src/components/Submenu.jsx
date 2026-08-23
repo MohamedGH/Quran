@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { TAJWEED_RULES, SAJDA_AYATS } from "../utils/quranData";
-import { splitArabicWords, splitArabicChars, isQalqala, getMaddType, isIzhar, isIdgham } from "../utils/arabicUtils";
+import { splitArabicWords, splitArabicChars, isQalqala, getMaddType, isIzhar, isIdgham, arabicRoot } from "../utils/arabicUtils";
 import { AyatCollectionsTab } from "./pages/CollectionsPage";
 import EditorWords from "./EditorWords";
 import VoiceRecorder from "./VoiceRecorder";
@@ -1100,6 +1100,101 @@ export function ApprentissageMode({ ayat, surahNum, ld, setLData, timestamps, au
         )}
       </div>
       <RecitationChecker ayat={ayat} attempts={ld.recitAttempts||[]} saveScore={s => update(d => ({ ...d, recitAttempts: [...(d.recitAttempts||[]).slice(-49), s], ...(s.score === 100 ? { learned: true } : {}) }))} />
+
+      {/* MOTS À SURLIGNER */}
+      <div style={{display:'flex',flexDirection:'column',gap:8,padding:'12px 14px',borderTop:'1px solid var(--border)'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <div style={{fontSize:9,letterSpacing:2,color:'var(--text3)'}}>MOTS À SURLIGNER</div>
+          <div style={{display:'flex',gap:6}}>
+            <button onClick={()=>setClickMode?.(clickMode==='highlight'?null:'highlight')} style={{
+              fontSize:8,letterSpacing:1,padding:'3px 10px',fontFamily:"'Cinzel',serif",cursor:'pointer',borderRadius:6,
+              background:clickMode==='highlight'?'rgba(255,209,102,.15)':'transparent',
+              border:`1px solid ${clickMode==='highlight'?'var(--gold)':'var(--border2)'}`,
+              color:clickMode==='highlight'?'var(--gold2)':'var(--text3)',
+            }}>{clickMode==='highlight' ? '✕ DÉSACTIVER' : "✏ CLIQUER SUR L'AYAT"}</button>
+            {ld?.highlight?.trim() && (
+              <button onClick={()=>setLData(surahNum,ayat.numberInSurah,d=>({...d,highlight:''}))} style={{
+                fontSize:8,letterSpacing:1,padding:'3px 8px',fontFamily:"'Cinzel',serif",cursor:'pointer',borderRadius:6,
+                background:'transparent',border:'1px solid var(--border2)',color:'var(--text3)',
+              }}>✕</button>
+            )}
+          </div>
+        </div>
+        {clickMode==='highlight' && (
+          <div style={{fontSize:8,color:'var(--teal2)',letterSpacing:1,padding:'4px 8px',background:'rgba(62,184,160,.08)',borderRadius:6,border:'1px solid var(--teal)'}}>
+            ↑ Cliquez sur les mots dans l'ayat ci-dessus
+          </div>
+        )}
+        {ld?.highlight?.trim() ? (
+          <div style={{direction:'rtl',fontFamily:"'Amiri Quran',serif",fontSize:18,color:'#ffd166',letterSpacing:.5,padding:'6px 10px',background:'rgba(255,209,102,.07)',borderRadius:6,border:'1px solid rgba(255,209,102,.2)'}}>
+            {ld.highlight}
+          </div>
+        ) : (
+          <div style={{fontSize:9,color:'var(--text3)',fontStyle:'italic'}}>Aucun mot sélectionné</div>
+        )}
+      </div>
+
+      {/* MOTS INCONNUS */}
+      <div style={{display:'flex',flexDirection:'column',gap:8,padding:'12px 14px',borderTop:'1px solid var(--border)'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <div style={{fontSize:9,letterSpacing:2,color:'var(--text3)'}}>MOTS INCONNUS</div>
+          <div style={{display:'flex',gap:6,alignItems:'center'}}>
+            <button onClick={()=>setClickMode?.(clickMode==='unknown'?null:'unknown')} style={{
+              fontSize:8,letterSpacing:1,padding:'3px 10px',fontFamily:"'Cinzel',serif",cursor:'pointer',borderRadius:6,
+              background:clickMode==='unknown'?'rgba(255,126,179,.15)':'transparent',
+              border:`1px solid ${clickMode==='unknown'?'#ff7eb3':'var(--border2)'}`,
+              color:clickMode==='unknown'?'#ff7eb3':'var(--text3)',
+            }}>{clickMode==='unknown' ? '✕ DÉSACTIVER' : "✏ CLIQUER SUR L'AYAT"}</button>
+            {(ld?.unknownWords||[]).length > 0 && (
+              <button onClick={()=>setLData(surahNum,ayat.numberInSurah,d=>({...d,unknownWords:[]}))} style={{
+                fontSize:8,letterSpacing:1,padding:'3px 8px',fontFamily:"'Cinzel',serif",cursor:'pointer',borderRadius:6,
+                background:'transparent',border:'1px solid var(--border2)',color:'var(--text3)',
+              }}>✕</button>
+            )}
+          </div>
+        </div>
+        {clickMode==='unknown' && (
+          <div style={{fontSize:8,color:'#ff7eb3',letterSpacing:1,padding:'4px 8px',background:'rgba(255,126,179,.08)',borderRadius:6,border:'1px solid rgba(255,126,179,.3)'}}>
+            ↑ Cliquez sur les mots inconnus dans l'ayat ci-dessus
+          </div>
+        )}
+        {(() => {
+          const ayatWords2 = ayat.text ? ayat.text.split(' ').filter(Boolean) : [];
+          const unkSet = new Set(ld?.unknownWords || []);
+          if (unkSet.size === 0) return <div style={{fontSize:9,color:'var(--text3)',fontStyle:'italic'}}>Aucun mot inconnu marqué</div>;
+          const unkNorms = new Set([...unkSet].map(i => arabicRoot(ayatWords2[i] || '')).filter(Boolean));
+          const autoSet = new Set();
+          ayatWords2.forEach((w, i) => { if (!unkSet.has(i) && unkNorms.has(arabicRoot(w))) autoSet.add(i); });
+          return (
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              <div style={{direction:'rtl',fontFamily:"'Amiri Quran',serif",fontSize:18,lineHeight:1.8}}>
+                {ayatWords2.map((w, i) => {
+                  const manual = unkSet.has(i);
+                  const auto   = !manual && autoSet.has(i);
+                  if (!manual && !auto) return null;
+                  return (
+                    <span key={i} style={{display:'inline-block',margin:'2px 4px',padding:'2px 6px',borderRadius:5,
+                      background: auto ? 'rgba(255,126,179,.07)' : 'rgba(255,126,179,.15)',
+                      border: `1px solid ${auto ? 'rgba(255,126,179,.25)' : 'rgba(255,126,179,.4)'}`,
+                      color:'#ff7eb3', opacity: auto ? 0.7 : 1,
+                      textDecoration:'underline dotted #ff7eb3',
+                      position:'relative',
+                    }}>
+                      {w}
+                      {auto && <span style={{position:'absolute',top:-6,right:2,fontSize:6,letterSpacing:.5,color:'rgba(255,126,179,.6)',fontFamily:"'Cinzel',serif"}}>AUTO</span>}
+                    </span>
+                  );
+                })}
+              </div>
+              {autoSet.size > 0 && (
+                <div style={{fontSize:8,color:'rgba(255,126,179,.6)',letterSpacing:1,fontFamily:"'Cinzel',serif"}}>
+                  +{autoSet.size} AUTRE{autoSet.size>1?'S':''} OCCURRENCE{autoSet.size>1?'S':''} DÉTECTÉE{autoSet.size>1?'S':''}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+      </div>
     </div>
   );
 }
