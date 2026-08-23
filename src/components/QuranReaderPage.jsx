@@ -10,7 +10,7 @@ import ArabicHighlighted from "./ArabicHighlighted";
 import Submenu from "./Submenu";
 import TsGlobalBar from "./TsGlobalBar";
 import MainPlayer from "./MainPlayer";
-import { fetchSurahSimple } from "../services/quranApi";
+import { fetchSurahSimple, getAudioBase, setGlobalRecitator, markBitrateBad, bitrateOrderFor, setReciterBitrate } from "../services/quranApi";
 
 export default function QuranReaderPage({
   currentUser,
@@ -59,29 +59,94 @@ export default function QuranReaderPage({
   const [showGoToAyat, setShowGoToAyat]     = useState(false);
   const [goToInput, setGoToInput]         = useState("");
   const [recitatorId, setRecitatorId]       = useState("Alafasy_128kbps");
+  const [bitrateVersion, setBitrateVersion] = useState(0);
 
   const selectedSurah = (surahs || []).find(s => s.number === selectedSurahNum) || null;
   const currentMainAyat = ayats[mainAyatIdx] || null;
 
   const mainAudioRef = useRef(null);
+  const loadedAyatIdxRef = useRef(null);
 
   const tskey = (sn, an) => `${recitatorId}:${sn}:${an}`;
+
+  useEffect(() => {
+    setGlobalRecitator(recitatorId);
+  }, [recitatorId]);
 
   const handleSetLData = (surahNum, ayatNum, updater) => {
     dispatch(setLDataThunk(surahNum, ayatNum, updater));
   };
 
-  const playMainAyat = (idx) => {
-    if (idx < 0 || idx >= ayats.length) return;
+  const playMainAyat = useCallback((idx) => {
+    if (!ayats || idx < 0 || idx >= ayats.length) return;
+    const changed = idx !== mainAyatIdx;
     dispatch(playerActions.setMainAyatIdx(idx));
     dispatch(playerActions.setPlayingAyatNum(ayats[idx].numberInSurah));
+    if (changed) dispatch(playerActions.setMainCurrentMs(0));
     dispatch(playerActions.setIsMainPlaying(true));
-  };
+  }, [ayats, mainAyatIdx, dispatch]);
 
-  const pauseMainAyat = () => {
+  const pauseMainAyat = useCallback(() => {
     dispatch(playerActions.setIsMainPlaying(false));
     dispatch(playerActions.setPlayingAyatNum(null));
-  };
+    if (mainAudioRef.current) mainAudioRef.current.pause();
+  }, [dispatch]);
+
+  const playWhenReady = useCallback(() => {
+    if (mainAudioRef.current) {
+      mainAudioRef.current.play().catch(() => {});
+    }
+  }, []);
+
+  const handleMainEnded = useCallback(() => {
+    const next = mainAyatIdx + 1;
+    if (loopActive) {
+      const end = Math.min(loopEnd, ayats.length - 1);
+      if (mainAyatIdx < end) {
+        playMainAyat(next);
+        playWhenReady();
+      } else {
+        const nc = loopCount + 1;
+        if (loopMax === 0 || nc < loopMax) {
+          dispatch(playerActions.setLoopCount(nc));
+          playMainAyat(loopStart);
+          playWhenReady();
+        } else {
+          dispatch(playerActions.setLoopActive(false));
+          dispatch(playerActions.setLoopCount(0));
+          dispatch(playerActions.setIsMainPlaying(false));
+          dispatch(playerActions.setPlayingAyatNum(null));
+          dispatch(playerActions.setMainCurrentMs(0));
+        }
+      }
+      return;
+    }
+    if (next < ayats.length) {
+      playMainAyat(next);
+      playWhenReady();
+    } else {
+      dispatch(playerActions.setIsMainPlaying(false));
+      dispatch(playerActions.setPlayingAyatNum(null));
+      dispatch(playerActions.setMainCurrentMs(0));
+    }
+  }, [mainAyatIdx, ayats, loopActive, loopEnd, loopCount, loopMax, loopStart, playMainAyat, playWhenReady, dispatch]);
+
+  useEffect(() => {
+    if (!mainAudioRef.current) return;
+    const audioEl = mainAudioRef.current;
+    const ayatChanged = loadedAyatIdxRef.current !== mainAyatIdx;
+    if (isMainPlaying) {
+      if (ayatChanged) {
+        loadedAyatIdxRef.current = mainAyatIdx;
+        audioEl.load();
+        audioEl.play().catch(() => {});
+      } else {
+        audioEl.play().catch(() => {});
+      }
+    } else {
+      audioEl.pause();
+    }
+  }, [mainAyatIdx, isMainPlaying]);
 
   const handleApplyLoopInput = (sVal, eVal) => {
     const s = parseInt(sVal) - 1;
@@ -207,7 +272,11 @@ export default function QuranReaderPage({
               <div
                 className="ayat-main"
                 onClick={() => {
-                  dispatch(quranActions.setOpenAyatNum(isOpen ? null : a.numberInSurah));
+                  const newOpen = isOpen ? null : a.numberInSurah;
+                  dispatch(quranActions.setOpenAyatNum(newOpen));
+                  if (!isOpen) {
+                    dispatch(uiActions.setSubmenuMode("lecture"));
+                  }
                 }}
               >
                 <div className="ayat-number-badge">{a.numberInSurah}</div>
@@ -238,6 +307,31 @@ export default function QuranReaderPage({
           );
         })}
       </div>
+
+      {/* PERSISTENT AUDIO ELEMENT */}
+      <audio
+        ref={mainAudioRef}
+        src={currentMainAyat ? `${getAudioBase()}/${currentMainAyat.number}.mp3` : ""}
+        onEnded={handleMainEnded}
+        onTimeUpdate={(e) => {
+          dispatch(playerActions.setMainCurrentMs((e.target.currentTime || 0) * 1000));
+        }}
+        onError={() => {
+          const next = markBitrateBad(recitatorId);
+          if (next != null) {
+            setBitrateVersion(v => v + 1);
+            loadedAyatIdxRef.current = null;
+            requestAnimationFrame(() => {
+              const a = mainAudioRef.current;
+              if (!a) return;
+              a.load();
+              loadedAyatIdxRef.current = mainAyatIdx;
+              if (isMainPlaying) playWhenReady();
+            });
+          }
+        }}
+        style={{ display: "none" }}
+      />
 
       {/* MainPlayer at bottom */}
       <MainPlayer
