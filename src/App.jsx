@@ -85,29 +85,34 @@ function AppInner({ currentUser, onSignOut }) {
     if (sn !== selectedSurah) {
       dispatch(quranActions.setSelectedSurah(sn));
     }
+
     if (!isNaN(urlAyatNum) && urlAyatNum >= 1) {
       if (urlAyatNum !== openAyatNum) {
         dispatch(quranActions.setOpenAyatNum(urlAyatNum));
       }
-    } else if (isNaN(urlAyatNum) && openAyatNum !== null) {
-      dispatch(quranActions.setOpenAyatNum(null));
+    } else {
+      const fallbackAyat = lastAyatBySurah[sn] || openAyatNum || 1;
+      if (openAyatNum !== fallbackAyat) {
+        dispatch(quranActions.setOpenAyatNum(fallbackAyat));
+      }
     }
-  }, [activePage, location.pathname, urlSurahNum, urlAyatNum, selectedSurah, openAyatNum, dispatch]);
+  }, [activePage, location.pathname, urlSurahNum, urlAyatNum, selectedSurah, openAyatNum, lastAyatBySurah, dispatch]);
 
   // Sync Redux openAyatNum → URL when user changes state in Redux
   useEffect(() => {
     if (activePage !== 'quran' || !selectedSurah) return;
-    const expectedPath = openAyatNum != null ? `/quran/${selectedSurah}/${openAyatNum}` : `/quran/${selectedSurah}`;
+    const an = openAyatNum || lastAyatBySurah[selectedSurah] || 1;
+    const expectedPath = `/quran/${selectedSurah}/${an}`;
     if (location.pathname !== expectedPath && location.pathname !== `${expectedPath}/`) {
       prevPathRef.current = expectedPath;
       navigate(expectedPath, { replace: true });
     }
-  }, [activePage, selectedSurah, openAyatNum, location.pathname, navigate]);
+  }, [activePage, selectedSurah, openAyatNum, lastAyatBySurah, location.pathname, navigate]);
 
   const setActivePage = useCallback((page) => {
     if (page === 'quran') {
       const sn = selectedSurah || 1;
-      const an = lastAyatBySurah[sn] || openAyatNum || 1;
+      const an = openAyatNum || lastAyatBySurah[sn] || 1;
       navigate(`/quran/${sn}/${an}`);
     } else {
       navigate(`/${page}`);
