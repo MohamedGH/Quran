@@ -275,7 +275,7 @@ export default function QuranReaderPage({
                   const newOpen = isOpen ? null : a.numberInSurah;
                   dispatch(quranActions.setOpenAyatNum(newOpen));
                   if (!isOpen) {
-                    dispatch(uiActions.setSubmenuMode("lecture"));
+                    dispatch(quranActions.setSubmenuMode("lecture"));
                   }
                 }}
               >
@@ -298,7 +298,7 @@ export default function QuranReaderPage({
                   ld={ld}
                   setLData={handleSetLData}
                   submenuMode={submenuMode}
-                  setSubmenuMode={(m) => dispatch(uiActions.setSubmenuMode(m))}
+                  setSubmenuMode={(m) => dispatch(quranActions.setSubmenuMode(m))}
                   audioUrl={`https://everyayah.com/data/${recitatorId}/${String(selectedSurah.number).padStart(3, "0")}${String(a.numberInSurah).padStart(3, "0")}.mp3`}
                   collections={collections}
                 />
