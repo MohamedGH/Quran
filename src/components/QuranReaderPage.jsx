@@ -39,6 +39,11 @@ export default function QuranReaderPage({
   const showTsBar       = useSelector(sel.showTsBar);
   const showLoopBar     = useSelector(sel.showLoopBar);
 
+  const enableLetterByLetter = useSelector(sel.enableLetterByLetter);
+  const enableTimestamps     = useSelector(sel.enableTimestamps);
+  const playingPart          = useSelector(sel.playingPart);
+  const localPlaying         = useSelector(sel.localPlaying);
+
   const isMainPlaying   = useSelector(sel.isMainPlaying);
   const mainAyatIdx     = useSelector(sel.mainAyatIdx);
   const playingAyatNum  = useSelector(sel.playingAyatNum);
@@ -463,11 +468,12 @@ export default function QuranReaderPage({
                 </div>
 
                 <div className="ayat-arabic">
-                  {isPlaying ? (
+                  {isPlaying && timestampsMap[tskey(selectedSurah.number, a.numberInSurah)] && enableLetterByLetter ? (
                     <PlayingArabicHighlighted
                       text={a.text}
                       timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
                       mode="main"
+                      playingPart={playingPart}
                       showQalqala={showQalqala}
                       showMadd={showMadd}
                       showIzhar={showIzhar}
@@ -478,12 +484,53 @@ export default function QuranReaderPage({
                       partSelectStep={partSelectStep}
                       partSelectStart={partSelectStart}
                       ayatNum={a.numberInSurah}
+                      showParts={showParts}
+                      aideMemoireClickMode={aideMemoireClickModes[a.numberInSurah] || null}
+                    />
+                  ) : playingPart?.ayatNum === a.numberInSurah && timestampsMap[tskey(selectedSurah.number, a.numberInSurah)] && enableLetterByLetter ? (
+                    <PlayingArabicHighlighted
+                      text={a.text}
+                      timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
+                      mode="part"
+                      playingPart={playingPart}
+                      showQalqala={showQalqala}
+                      showMadd={showMadd}
+                      showIzhar={showIzhar}
+                      showIdgham={showIdgham}
+                      onWordClick={handleWordClick}
+                      ld={ld}
+                      partSelectAyat={partSelectAyat}
+                      partSelectStep={partSelectStep}
+                      partSelectStart={partSelectStart}
+                      ayatNum={a.numberInSurah}
+                      showParts={showParts}
+                      aideMemoireClickMode={aideMemoireClickModes[a.numberInSurah] || null}
+                    />
+                  ) : localPlaying?.ayatNum === a.numberInSurah && timestampsMap[tskey(selectedSurah.number, a.numberInSurah)] && enableLetterByLetter ? (
+                    <PlayingArabicHighlighted
+                      text={a.text}
+                      timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
+                      mode="local"
+                      playingPart={playingPart}
+                      showQalqala={showQalqala}
+                      showMadd={showMadd}
+                      showIzhar={showIzhar}
+                      showIdgham={showIdgham}
+                      onWordClick={handleWordClick}
+                      ld={ld}
+                      partSelectAyat={partSelectAyat}
+                      partSelectStep={partSelectStep}
+                      partSelectStart={partSelectStart}
+                      ayatNum={a.numberInSurah}
+                      showParts={showParts}
+                      aideMemoireClickMode={aideMemoireClickModes[a.numberInSurah] || null}
                     />
                   ) : (
                     <ArabicHighlighted
                       text={a.text}
                       timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
                       currentMs={0}
+                      enableTimestamps={enableTimestamps}
                       showQalqala={showQalqala}
                       showMadd={showMadd}
                       showIzhar={showIzhar}
@@ -494,6 +541,8 @@ export default function QuranReaderPage({
                       partSelectStep={partSelectStep}
                       partSelectStart={partSelectStart}
                       ayatNum={a.numberInSurah}
+                      showParts={showParts}
+                      aideMemoireClickMode={aideMemoireClickModes[a.numberInSurah] || null}
                     />
                   )}
                 </div>

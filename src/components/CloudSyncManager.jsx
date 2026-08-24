@@ -113,33 +113,39 @@ export default function CloudSyncManager({ uid }) {
   useEffect(() => {
     if (!uid || uid === "demo-user") return;
     const docRef = doc(firebaseDb, "users", uid);
-    const unsub = onSnapshot(docRef, (snap) => {
-      if (snap.exists()) {
-        const d = snap.data();
-        if (d.deviceId && d.deviceId !== getDeviceId() && isInitialPullDone.current) {
-          addSyncLog("info", `Mise à jour distante détectée (${d.deviceId}) — fusion...`);
-          if (d.learnData) {
-            Object.entries(d.learnData).forEach(([key, data]) => {
-              if (key.includes(":")) {
-                const [sn, an] = key.split(":").map(Number);
-                if (!isNaN(sn) && !isNaN(an) && data) {
-                  dispatch(setLDataThunk(sn, an, () => data));
-                }
-              } else if (data && typeof data === "object") {
-                Object.entries(data).forEach(([an, item]) => {
-                  const snNum = Number(key);
-                  const anNum = Number(an);
-                  if (!isNaN(snNum) && !isNaN(anNum) && item) {
-                    dispatch(setLDataThunk(snNum, anNum, () => item));
+    const unsub = onSnapshot(
+      docRef,
+      (snap) => {
+        if (snap.exists()) {
+          const d = snap.data();
+          if (d.deviceId && d.deviceId !== getDeviceId() && isInitialPullDone.current) {
+            addSyncLog("info", `Mise à jour distante détectée (${d.deviceId}) — fusion...`);
+            if (d.learnData) {
+              Object.entries(d.learnData).forEach(([key, data]) => {
+                if (key.includes(":")) {
+                  const [sn, an] = key.split(":").map(Number);
+                  if (!isNaN(sn) && !isNaN(an) && data) {
+                    dispatch(setLDataThunk(sn, an, () => data));
                   }
-                });
-              }
-            });
+                } else if (data && typeof data === "object") {
+                  Object.entries(data).forEach(([an, item]) => {
+                    const snNum = Number(key);
+                    const anNum = Number(an);
+                    if (!isNaN(snNum) && !isNaN(anNum) && item) {
+                      dispatch(setLDataThunk(snNum, anNum, () => item));
+                    }
+                  });
+                }
+              });
+            }
+            if (d.collections) dispatch(collectionsActions.setCollections(d.collections));
           }
-          if (d.collections) dispatch(collectionsActions.setCollections(d.collections));
         }
+      },
+      (err) => {
+        addSyncLog("err", `Snapshot listener disabled: ${err.message}`);
       }
-    });
+    );
     return unsub;
   }, [uid, dispatch]);
 

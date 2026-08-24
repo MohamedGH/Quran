@@ -91,11 +91,11 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
   const wordData = useMemo(() => {
     if (timestamps?.words) {
       return timestamps.words.map((word, wi) => {
-        const origWord = words[wi];
+        const origWord = words[wi] || '';
         if (word.chars && word.chars.length > 0) {
           const wordArr = word.chars.map(x => x.char);
           const fixed = fixChars(word.chars);
-          return fixed.map((c, ci) => {
+          const charsMapped = fixed.map((c, ci) => {
             const isQalqalaOn = showQalqala && isQalqala(wordArr, ci);
             const maddType    = showMadd ? getMaddType(wordArr, ci) : null;
             const izharOn     = showIzhar && isIzhar(wordArr, ci);
@@ -108,19 +108,26 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
                               : undefined;
             return { char: c.char, start: c.start, end: c.end, tajStyle };
           });
+          const hasTajweed = charsMapped.some(c => c.tajStyle !== undefined);
+          return { origWord, chars: charsMapped, hasTajweed };
         }
-        return [{ char: origWord || '', start: 0, end: 0, tajStyle: undefined }];
+        return { origWord, chars: [{ char: origWord, start: 0, end: 0, tajStyle: undefined }], hasTajweed: false };
       });
     }
 
-    return words.map(w => [{ char: w, start: 0, end: 0, tajStyle: undefined }]);
+    return words.map(w => ({
+      origWord: w,
+      chars: [{ char: w, start: 0, end: 0, tajStyle: undefined }],
+      hasTajweed: false
+    }));
   }, [timestamps, words, showQalqala, showMadd, showIzhar, showIdgham]);
 
   const isSelectingThisAyat = partSelectAyat === ayatNum;
 
   return (
     <div className="ayat-arabic" ref={ref} style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '4px', direction: 'rtl', alignItems: 'center' }}>
-      {wordData.map((chars, wi) => {
+      {wordData.map((item, wi) => {
+        const chars = item.chars;
         const partInfo = wordPartMap[wi];
         const isHighlighted = highlightedSet.has(wi);
         const isUnknown = unknownSet.has(wi);
@@ -219,14 +226,17 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
                 P{partInfo.partIndex + 1}
               </span>
             )}
-            {chars.map((c, ci) => {
-              const isCharActive = currentMs > 0 && currentMs >= c.start && currentMs <= c.end;
-              const isCharDone = currentMs > 0 && currentMs > c.end;
-              const charClass = `char-span${isCharActive ? ' char-active' : ''}${isCharDone ? ' char-done' : ''}`;
-              return (
-                <span key={ci} className={charClass} style={c.tajStyle}>{c.char}</span>
-              );
-            })}
+            {item.hasTajweed || currentMs > 0
+              ? chars.map((c, ci) => {
+                  const isCharActive = currentMs > 0 && currentMs >= c.start && currentMs <= c.end;
+                  const isCharDone = currentMs > 0 && currentMs > c.end;
+                  const charClass = `char-span${isCharActive ? ' char-active' : ''}${isCharDone ? ' char-done' : ''}`;
+                  return (
+                    <span key={ci} className={charClass} style={c.tajStyle}>{c.char}</span>
+                  );
+                })
+              : <span className="char-span">{item.origWord}</span>
+            }
           </span>
         );
       })}
