@@ -3,6 +3,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   updateProfile,
 } from "firebase/auth";
 import { firebaseAuth, googleProvider } from "../services/firebase";
@@ -53,8 +54,13 @@ export default function LoginScreen({ onLoggedIn }) {
       await signInWithPopup(firebaseAuth, googleProvider);
       onLoggedIn?.();
     } catch (err) {
-      console.error("[LoginGoogle]", err);
-      setError(err.message);
+      console.warn("[LoginGoogle popup failed, trying redirect]", err);
+      try {
+        await signInWithRedirect(firebaseAuth, googleProvider);
+      } catch (redirectErr) {
+        console.error("[LoginGoogle redirect failed]", redirectErr);
+        setError(redirectErr.message);
+      }
     } finally {
       setLoading(false);
     }
