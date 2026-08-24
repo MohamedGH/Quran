@@ -90,22 +90,26 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
 
   const wordData = useMemo(() => {
     if (timestamps?.words) {
-      return timestamps.words.map(word => {
-        const wordArr = word.chars ? word.chars.map(x => x.char) : [];
-        const fixed = fixChars(word.chars || []);
-        return fixed.map((c, ci) => {
-          const isQalqalaOn = showQalqala && isQalqala(wordArr, ci);
-          const maddType    = showMadd ? getMaddType(wordArr, ci) : null;
-          const izharOn     = showIzhar && isIzhar(wordArr, ci);
-          const idghamOn    = showIdgham && isIdgham(wordArr, ci);
-          const tajStyle    = isQalqalaOn ? {color:'#5bc8f5',textShadow:'0 0 6px rgba(91,200,245,.5)'}
-                            : maddType === 'muttasil' ? {color:'#ff7eb3',textShadow:'0 0 8px rgba(255,126,179,.6)',fontWeight:600}
-                            : maddType === 'normal'   ? {color:'#f09de0',textShadow:'0 0 6px rgba(240,157,224,.5)'}
-                            : izharOn                 ? {color:'#4caf81',textShadow:'0 0 6px rgba(76,175,129,.5)'}
-                            : idghamOn                ? {color:'#ffd166',textShadow:'0 0 6px rgba(255,209,102,.5)'}
-                            : undefined;
-          return { char: c.char, start: c.start, end: c.end, tajStyle };
-        });
+      return timestamps.words.map((word, wi) => {
+        const origWord = words[wi];
+        if (word.chars && word.chars.length > 0) {
+          const wordArr = word.chars.map(x => x.char);
+          const fixed = fixChars(word.chars);
+          return fixed.map((c, ci) => {
+            const isQalqalaOn = showQalqala && isQalqala(wordArr, ci);
+            const maddType    = showMadd ? getMaddType(wordArr, ci) : null;
+            const izharOn     = showIzhar && isIzhar(wordArr, ci);
+            const idghamOn    = showIdgham && isIdgham(wordArr, ci);
+            const tajStyle    = isQalqalaOn ? {color:'#5bc8f5',textShadow:'0 0 6px rgba(91,200,245,.5)'}
+                              : maddType === 'muttasil' ? {color:'#ff7eb3',textShadow:'0 0 8px rgba(255,126,179,.6)',fontWeight:600}
+                              : maddType === 'normal'   ? {color:'#f09de0',textShadow:'0 0 6px rgba(240,157,224,.5)'}
+                              : izharOn                 ? {color:'#4caf81',textShadow:'0 0 6px rgba(76,175,129,.5)'}
+                              : idghamOn                ? {color:'#ffd166',textShadow:'0 0 6px rgba(255,209,102,.5)'}
+                              : undefined;
+            return { char: c.char, start: c.start, end: c.end, tajStyle };
+          });
+        }
+        return [{ char: origWord || '', start: 0, end: 0, tajStyle: undefined }];
       });
     }
 
