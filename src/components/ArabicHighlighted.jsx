@@ -125,7 +125,7 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
   const isSelectingThisAyat = partSelectAyat === ayatNum;
 
   return (
-    <div className="ayat-arabic" ref={ref} style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '4px', direction: 'rtl', alignItems: 'center' }}>
+    <div className="ayat-arabic" ref={ref} style={{ direction: 'rtl' }}>
       {wordData.map((item, wi) => {
         const chars = item.chars;
         const partInfo = wordPartMap[wi];
@@ -154,11 +154,12 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
         const isWordActive = currentMs > 0 && currentMs >= wordStart && currentMs <= wordEnd;
         const isWordDone = currentMs > 0 && currentMs > wordEnd;
 
+        const hasCustomBox = partInfo || isHighlighted || isUnknown || isSelectedForPart || isDisabledForPart;
+
         const wordStyle = {
           position: 'relative',
-          display: 'inline-flex',
-          alignItems: 'center',
-          padding: '2px 5px',
+          display: hasCustomBox ? 'inline-block' : 'inline',
+          padding: hasCustomBox ? '2px 4px' : undefined,
           borderRadius: '4px',
           transition: 'all 0.15s ease',
           cursor: onWordClick ? 'pointer' : 'default',
@@ -194,50 +195,52 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
         const wordClass = `word-span${isSelectedForPart ? ' word-selecting' : ''}${isWordActive ? ' word-active' : ''}${isWordDone ? ' word-done' : ''}`;
 
         return (
-          <span
-            key={wi}
-            className={wordClass}
-            style={wordStyle}
-            data-word-idx={wi}
-            onClick={(e) => {
-              if (onWordClick) {
-                e.stopPropagation();
-                onWordClick(wi);
+          <React.Fragment key={wi}>
+            <span
+              className={wordClass}
+              style={wordStyle}
+              data-word-idx={wi}
+              onClick={(e) => {
+                if (onWordClick) {
+                  e.stopPropagation();
+                  onWordClick(wi);
+                }
+              }}
+            >
+              {partInfo && partInfo.isFirst && (
+                <span
+                  className="part-badge"
+                  style={{
+                    fontSize: '8px',
+                    fontFamily: "'Cinzel', serif",
+                    fontWeight: 'bold',
+                    background: partInfo.border,
+                    color: '#111',
+                    padding: '1px 4px',
+                    borderRadius: '3px',
+                    marginLeft: '4px',
+                    lineHeight: 1,
+                    display: 'inline-block',
+                    userSelect: 'none'
+                  }}
+                >
+                  P{partInfo.partIndex + 1}
+                </span>
+              )}
+              {item.hasTajweed || currentMs > 0
+                ? chars.map((c, ci) => {
+                    const isCharActive = currentMs > 0 && currentMs >= c.start && currentMs <= c.end;
+                    const isCharDone = currentMs > 0 && currentMs > c.end;
+                    const charClass = `char-span${isCharActive ? ' char-active' : ''}${isCharDone ? ' char-done' : ''}`;
+                    return (
+                      <span key={ci} className={charClass} style={c.tajStyle}>{c.char}</span>
+                    );
+                  })
+                : <span className="char-span">{item.origWord}</span>
               }
-            }}
-          >
-            {partInfo && partInfo.isFirst && (
-              <span
-                className="part-badge"
-                style={{
-                  fontSize: '8px',
-                  fontFamily: "'Cinzel', serif",
-                  fontWeight: 'bold',
-                  background: partInfo.border,
-                  color: '#111',
-                  padding: '1px 4px',
-                  borderRadius: '3px',
-                  marginLeft: '4px',
-                  lineHeight: 1,
-                  display: 'inline-block',
-                  userSelect: 'none'
-                }}
-              >
-                P{partInfo.partIndex + 1}
-              </span>
-            )}
-            {item.hasTajweed || currentMs > 0
-              ? chars.map((c, ci) => {
-                  const isCharActive = currentMs > 0 && currentMs >= c.start && currentMs <= c.end;
-                  const isCharDone = currentMs > 0 && currentMs > c.end;
-                  const charClass = `char-span${isCharActive ? ' char-active' : ''}${isCharDone ? ' char-done' : ''}`;
-                  return (
-                    <span key={ci} className={charClass} style={c.tajStyle}>{c.char}</span>
-                  );
-                })
-              : <span className="char-span">{item.origWord}</span>
-            }
-          </span>
+            </span>
+            {wi < wordData.length - 1 ? ' ' : ''}
+          </React.Fragment>
         );
       })}
     </div>

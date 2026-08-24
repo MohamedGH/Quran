@@ -63,7 +63,7 @@ export default function CloudSyncManager({ uid }) {
         }
         if (cloudData.lastAyatBySurah) {
           Object.entries(cloudData.lastAyatBySurah).forEach(([sn, an]) => {
-            dispatch(quranActions.setLastAyat({ surahNum: Number(sn), ayatNum: Number(an) }));
+              dispatch(quranActions.setLastAyatForSurah({ surahNum: Number(sn), ayatNum: Number(an) }));
           });
         }
         if (cloudData.revisionMastery) {

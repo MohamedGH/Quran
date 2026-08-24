@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { sel } from "../../store";
 import ArabicHighlighted from "../ArabicHighlighted";
 import "./CollectionsPage.css";
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { SURAH_INFO } from "../../utils/quranData";
 import "./DashboardPage.css";
 

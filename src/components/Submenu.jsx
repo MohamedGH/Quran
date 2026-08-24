@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useSelector } from "react-redux";
+import { sel } from "../store";
 import { TAJWEED_RULES, SAJDA_AYATS } from "../utils/quranData";
 import { splitArabicWords, splitArabicChars, isQalqala, getMaddType, isIzhar, isIdgham, arabicRoot } from "../utils/arabicUtils";
 import { AyatCollectionsTab } from "./pages/CollectionsPage";
