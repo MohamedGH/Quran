@@ -51,17 +51,10 @@ export default function LoginScreen({ onLoggedIn }) {
     setError(null);
     setLoading(true);
     try {
-      await signInWithPopup(firebaseAuth, googleProvider);
-      onLoggedIn?.();
+      await signInWithRedirect(firebaseAuth, googleProvider);
     } catch (err) {
-      console.warn("[LoginGoogle popup failed, trying redirect]", err);
-      try {
-        await signInWithRedirect(firebaseAuth, googleProvider);
-      } catch (redirectErr) {
-        console.error("[LoginGoogle redirect failed]", redirectErr);
-        setError(redirectErr.message);
-      }
-    } finally {
+      console.error("[LoginGoogle]", err);
+      setError(err.message);
       setLoading(false);
     }
   };

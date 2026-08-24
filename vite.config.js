@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   server: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    },
     proxy: {
       '/audio-proxy': {
         target: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy',
