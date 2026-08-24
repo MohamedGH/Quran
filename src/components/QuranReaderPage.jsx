@@ -6,7 +6,7 @@ import {
   setLDataThunk
 } from "../store";
 import { masteryColor, normalizeAr, arabicRoot } from "../utils/arabicUtils";
-import ArabicHighlighted from "./ArabicHighlighted";
+import ArabicHighlighted, { PlayingArabicHighlighted } from "./ArabicHighlighted";
 import Submenu from "./Submenu";
 import TsGlobalBar from "./TsGlobalBar";
 import MainPlayer from "./MainPlayer";

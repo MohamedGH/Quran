@@ -21,7 +21,7 @@ export default function CloudSyncManager({ uid }) {
   const saveTimerRef      = useRef(null);
 
   const pullFromCloud = useCallback(async () => {
-    if (!uid) return;
+    if (!uid || uid === "demo-user") return;
     try {
       addSyncLog("info", "Lecture données cloud...");
       const docRef = doc(firebaseDb, "users", uid);
@@ -81,7 +81,7 @@ export default function CloudSyncManager({ uid }) {
   }, [uid, dispatch]);
 
   const pushToCloud = useCallback(async () => {
-    if (!uid || !isInitialPullDone.current) return;
+    if (!uid || uid === "demo-user" || !isInitialPullDone.current) return;
     try {
       addSyncLog("info", "Sauvegarde automatique dans le cloud...");
       const docRef = doc(firebaseDb, "users", uid);
@@ -106,12 +106,12 @@ export default function CloudSyncManager({ uid }) {
   }, [uid, learnData, collections, activity, goals, loopBySurah, lastAyatBySurah, revisionMastery]);
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || uid === "demo-user") return;
     pullFromCloud();
   }, [uid, pullFromCloud]);
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || uid === "demo-user") return;
     const docRef = doc(firebaseDb, "users", uid);
     const unsub = onSnapshot(docRef, (snap) => {
       if (snap.exists()) {

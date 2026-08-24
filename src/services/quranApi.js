@@ -282,10 +282,24 @@ export async function loadTimestampsForSurah(surahNum, recitatorId = 'ar.alafasy
 
 export function fixChars(chars) {
   if (!chars?.length) return [];
-  const wordEnd = chars[chars.length - 1].end;
-  return chars.map((c, ci) => {
+  const isDiac = ch => /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/.test(ch);
+
+  // Group standalone diacritics with preceding base character if present
+  const merged = [];
+  for (let i = 0; i < chars.length; i++) {
+    let curr = { ...chars[i] };
+    while (i + 1 < chars.length && isDiac(chars[i + 1].char)) {
+      i++;
+      curr.char += chars[i].char;
+      curr.end = Math.max(curr.end, chars[i].end);
+    }
+    merged.push(curr);
+  }
+
+  const wordEnd = merged[merged.length - 1].end;
+  return merged.map((c, ci) => {
     if (c.start === c.end) {
-      const nextReal = chars.slice(ci + 1).find(x => x.end > c.start);
+      const nextReal = merged.slice(ci + 1).find(x => x.end > c.start);
       return { ...c, end: nextReal ? nextReal.start : wordEnd };
     }
     return c;
