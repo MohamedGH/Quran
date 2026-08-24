@@ -254,19 +254,23 @@ export const PlayingArabicHighlighted = React.memo(function PlayingArabicHighlig
   const partCurrentMs = useSelector(sel.partCurrentMs);
   const localPlaying  = useSelector(sel.localPlaying);
   const containerRef  = useRef(null);
+  const charDataRef   = useRef(null);
 
-  const wordRanges = useMemo(() => {
-    if (!timestamps?.words) return [];
-    return timestamps.words.map(w => {
-      const chars = fixChars(w.chars || []);
-      const start = chars[0]?.start ?? 0;
-      const end = chars[chars.length - 1]?.end ?? 0;
-      return { start, end, chars };
+  const charData = useMemo(() => {
+    if (!timestamps?.words) return null;
+    const flat = [];
+    timestamps.words.forEach(word => {
+      fixChars(word.chars || []).forEach(c => flat.push({ start: c.start, end: c.end }));
     });
+    return flat;
   }, [timestamps]);
 
+  charDataRef.current = charData;
+
   useEffect(() => {
-    if (!containerRef.current || wordRanges.length === 0) return;
+    const flat = charDataRef.current;
+    if (!flat || !containerRef.current) return;
+
     let curMs;
     let rangeStartMs = null;
     if (mode === 'main') {
@@ -280,41 +284,30 @@ export const PlayingArabicHighlighted = React.memo(function PlayingArabicHighlig
       curMs = localPlaying?.currentMs ?? -1;
     }
 
-    const wordEls = containerRef.current.querySelectorAll('.word-span');
-    wordRanges.forEach(({ start, end, chars }, wi) => {
-      const wEl = wordEls[wi];
-      if (!wEl) return;
-      const isWordActive = curMs > 0 && curMs >= start && curMs <= end;
-      const isWordDone = curMs > 0 && curMs > end && (rangeStartMs == null || end > rangeStartMs);
+    const spans = containerRef.current.querySelectorAll('.char-span');
+    if (spans.length !== flat.length) return;
 
-      if (isWordActive) {
-        wEl.classList.add('word-active');
-        wEl.classList.remove('word-done');
-      } else if (isWordDone) {
-        wEl.classList.add('word-done');
-        wEl.classList.remove('word-active');
-      } else {
-        wEl.classList.remove('word-active', 'word-done');
-      }
-
-      const charSpans = wEl.querySelectorAll('.char-span');
-      chars.forEach(({ start: cs, end: ce }, ci) => {
-        const cEl = charSpans[ci];
-        if (!cEl) return;
-        const active = curMs > 0 && curMs >= cs && curMs <= ce;
-        const done = curMs > 0 && curMs > ce && (rangeStartMs == null || ce > rangeStartMs);
-        if (active) {
-          cEl.classList.add('char-active');
-          cEl.classList.remove('char-done');
-        } else if (done) {
-          cEl.classList.add('char-done');
-          cEl.classList.remove('char-active');
-        } else {
-          cEl.classList.remove('char-active', 'char-done');
+    flat.forEach(({ start, end }, i) => {
+      const active = curMs >= start && curMs <= end;
+      const done   = curMs > end && curMs > 0 && (rangeStartMs == null || end > rangeStartMs);
+      const el = spans[i];
+      if (active) {
+        if (!el.classList.contains('char-active')) {
+          el.classList.add('char-active');
+          el.classList.remove('char-done');
         }
-      });
+      } else if (done) {
+        if (!el.classList.contains('char-done')) {
+          el.classList.add('char-done');
+          el.classList.remove('char-active');
+        }
+      } else {
+        if (el.classList.contains('char-active') || el.classList.contains('char-done')) {
+          el.classList.remove('char-active', 'char-done');
+        }
+      }
     });
-  }, [mainCurrentMs, partCurrentMs, localPlaying, mode, ld, playingPart, timestamps, wordRanges]);
+  }, [mainCurrentMs, partCurrentMs, localPlaying, mode, ld, playingPart, timestamps]);
 
   return <ArabicHighlighted ref={containerRef} text={text} timestamps={timestamps}
     currentMs={-1} showQalqala={showQalqala} showMadd={showMadd}
