@@ -39,15 +39,70 @@ describe('Submenu Component Functional Tests', () => {
     expect(setSubmenuModeMock).toHaveBeenCalledWith('decouverte');
   });
 
-  it('renders ToRevise mode when mode is reviser', () => {
+  it('renders ToRevise mode when mode is reviser and displays revision history', () => {
+    const dummyLd = {
+      learned: false,
+      toRevise: true,
+      reviseHistory: [
+        { startDate: '2025-01-01T10:00:00.000Z', endDate: '2025-01-01T10:30:00.000Z', words: [0, 1], parts: [] }
+      ]
+    };
+
     render(
       <Provider store={store}>
         <Submenu
           ayat={dummyAyat}
           surahNum={1}
-          ld={{ learned: false, toRevise: true }}
+          ld={dummyLd}
           setLData={() => {}}
           submenuMode="reviser"
+          setSubmenuMode={() => {}}
+          audioUrl="http://example.com/1.mp3"
+          collections={[]}
+          ayatInCollections={[]}
+        />
+      </Provider>
+    );
+
+    expect(screen.getByText('🔖 MARQUER À RÉVISER')).toBeInTheDocument();
+    expect(screen.getByText('HISTORIQUE DES RÉVISIONS')).toBeInTheDocument();
+  });
+
+  it('handles word click in DecouverteMode to toggle word revision', () => {
+    const setLDataMock = vi.fn();
+    render(
+      <Provider store={store}>
+        <Submenu
+          ayat={dummyAyat}
+          surahNum={1}
+          ld={{ learned: false }}
+          setLData={setLDataMock}
+          submenuMode="decouverte"
+          setSubmenuMode={() => {}}
+          audioUrl="http://example.com/1.mp3"
+          collections={[]}
+          ayatInCollections={[]}
+        />
+      </Provider>
+    );
+
+    const hiddenWord = screen.getAllByText('▪▪▪')[0];
+    fireEvent.click(hiddenWord); // reveals word
+    expect(screen.getByText('بِسْمِ')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('بِسْمِ')); // toggles word revision
+    expect(setLDataMock).toHaveBeenCalled();
+  });
+
+  it('renders À RÉVISER button in decouverte mode', () => {
+    render(
+      <Provider store={store}>
+        <Submenu
+          ayat={dummyAyat}
+          surahNum={1}
+          ld={{ learned: false }}
+          setLData={() => {}}
+          submenuMode="decouverte"
           setSubmenuMode={() => {}}
           audioUrl="http://example.com/1.mp3"
           collections={[]}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { splitArabicWords, normalizeArabic } from "../../utils/arabicUtils";
 import { useArabicKeyboard } from "../ArabicKeyboard";
 import ArabicHighlighted from "../ArabicHighlighted";

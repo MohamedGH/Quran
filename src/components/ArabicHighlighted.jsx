@@ -23,7 +23,7 @@ export const PART_BORDERS = [
 export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHighlighted({
   text,
   timestamps,
-  currentMs,
+  currentMs = 0,
   rangeStartMs,
   showQalqala,
   showMadd,
@@ -90,33 +90,44 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
 
   const wordData = useMemo(() => {
     if (timestamps?.words) {
-      return timestamps.words.map(word => {
-        const wordArr = word.chars ? word.chars.map(x => x.char) : [];
-        const fixed = fixChars(word.chars || []);
-        return fixed.map((c, ci) => {
-          const isQalqalaOn = showQalqala && isQalqala(wordArr, ci);
-          const maddType    = showMadd ? getMaddType(wordArr, ci) : null;
-          const izharOn     = showIzhar && isIzhar(wordArr, ci);
-          const idghamOn    = showIdgham && isIdgham(wordArr, ci);
-          const tajStyle    = isQalqalaOn ? {color:'#5bc8f5',textShadow:'0 0 6px rgba(91,200,245,.5)'}
-                            : maddType === 'muttasil' ? {color:'#ff7eb3',textShadow:'0 0 8px rgba(255,126,179,.6)',fontWeight:600}
-                            : maddType === 'normal'   ? {color:'#f09de0',textShadow:'0 0 6px rgba(240,157,224,.5)'}
-                            : izharOn                 ? {color:'#4caf81',textShadow:'0 0 6px rgba(76,175,129,.5)'}
-                            : idghamOn                ? {color:'#ffd166',textShadow:'0 0 6px rgba(255,209,102,.5)'}
-                            : undefined;
-          return { char: c.char, start: c.start, end: c.end, tajStyle };
-        });
+      return timestamps.words.map((word, wi) => {
+        const origWord = words[wi] || '';
+        if (word.chars && word.chars.length > 0) {
+          const wordArr = word.chars.map(x => x.char);
+          const fixed = fixChars(word.chars);
+          const charsMapped = fixed.map((c, ci) => {
+            const isQalqalaOn = showQalqala && isQalqala(wordArr, ci);
+            const maddType    = showMadd ? getMaddType(wordArr, ci) : null;
+            const izharOn     = showIzhar && isIzhar(wordArr, ci);
+            const idghamOn    = showIdgham && isIdgham(wordArr, ci);
+            const tajStyle    = isQalqalaOn ? {color:'#5bc8f5',textShadow:'0 0 6px rgba(91,200,245,.5)'}
+                              : maddType === 'muttasil' ? {color:'#ff7eb3',textShadow:'0 0 8px rgba(255,126,179,.6)',fontWeight:600}
+                              : maddType === 'normal'   ? {color:'#f09de0',textShadow:'0 0 6px rgba(240,157,224,.5)'}
+                              : izharOn                 ? {color:'#4caf81',textShadow:'0 0 6px rgba(76,175,129,.5)'}
+                              : idghamOn                ? {color:'#ffd166',textShadow:'0 0 6px rgba(255,209,102,.5)'}
+                              : undefined;
+            return { char: c.char, start: c.start, end: c.end, tajStyle };
+          });
+          const hasTajweed = charsMapped.some(c => c.tajStyle !== undefined);
+          return { origWord, chars: charsMapped, hasTajweed };
+        }
+        return { origWord, chars: [{ char: origWord, start: 0, end: 0, tajStyle: undefined }], hasTajweed: false };
       });
     }
 
-    return words.map(w => [{ char: w, start: 0, end: 0, tajStyle: undefined }]);
+    return words.map(w => ({
+      origWord: w,
+      chars: [{ char: w, start: 0, end: 0, tajStyle: undefined }],
+      hasTajweed: false
+    }));
   }, [timestamps, words, showQalqala, showMadd, showIzhar, showIdgham]);
 
   const isSelectingThisAyat = partSelectAyat === ayatNum;
 
   return (
-    <div className="ayat-arabic" ref={ref} style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '4px', direction: 'rtl', alignItems: 'center' }}>
-      {wordData.map((chars, wi) => {
+    <div className="ayat-arabic" ref={ref} style={{ direction: 'rtl' }}>
+      {wordData.map((item, wi) => {
+        const chars = item.chars;
         const partInfo = wordPartMap[wi];
         const isHighlighted = highlightedSet.has(wi);
         const isUnknown = unknownSet.has(wi);
@@ -138,11 +149,17 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
           }
         }
 
+        const wordStart = chars[0]?.start ?? 0;
+        const wordEnd = chars[chars.length - 1]?.end ?? 0;
+        const isWordActive = currentMs > 0 && currentMs >= wordStart && currentMs <= wordEnd;
+        const isWordDone = currentMs > 0 && currentMs > wordEnd;
+
+        const hasCustomBox = partInfo || isHighlighted || isUnknown || isSelectedForPart || isDisabledForPart;
+
         const wordStyle = {
           position: 'relative',
-          display: 'inline-flex',
-          alignItems: 'center',
-          padding: '2px 5px',
+          display: hasCustomBox ? 'inline-block' : 'inline',
+          padding: hasCustomBox ? '2px 4px' : undefined,
           borderRadius: '4px',
           transition: 'all 0.15s ease',
           cursor: onWordClick ? 'pointer' : 'default',
@@ -175,42 +192,55 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
           } : {})
         };
 
+        const wordClass = `word-span${isSelectedForPart ? ' word-selecting' : ''}${isWordActive ? ' word-active' : ''}${isWordDone ? ' word-done' : ''}`;
+
         return (
-          <span
-            key={wi}
-            className={`word-span${isSelectedForPart ? ' word-selecting' : ''}`}
-            style={wordStyle}
-            onClick={(e) => {
-              if (onWordClick) {
-                e.stopPropagation();
-                onWordClick(wi);
+          <React.Fragment key={wi}>
+            <span
+              className={wordClass}
+              style={wordStyle}
+              data-word-idx={wi}
+              onClick={(e) => {
+                if (onWordClick) {
+                  e.stopPropagation();
+                  onWordClick(wi);
+                }
+              }}
+            >
+              {partInfo && partInfo.isFirst && (
+                <span
+                  className="part-badge"
+                  style={{
+                    fontSize: '8px',
+                    fontFamily: "'Cinzel', serif",
+                    fontWeight: 'bold',
+                    background: partInfo.border,
+                    color: '#111',
+                    padding: '1px 4px',
+                    borderRadius: '3px',
+                    marginLeft: '4px',
+                    lineHeight: 1,
+                    display: 'inline-block',
+                    userSelect: 'none'
+                  }}
+                >
+                  P{partInfo.partIndex + 1}
+                </span>
+              )}
+              {item.hasTajweed || currentMs > 0
+                ? chars.map((c, ci) => {
+                    const isCharActive = currentMs > 0 && currentMs >= c.start && currentMs <= c.end;
+                    const isCharDone = currentMs > 0 && currentMs > c.end;
+                    const charClass = `char-span${isCharActive ? ' char-active' : ''}${isCharDone ? ' char-done' : ''}`;
+                    return (
+                      <span key={ci} className={charClass} style={c.tajStyle}>{c.char}</span>
+                    );
+                  })
+                : <span className="char-span">{item.origWord}</span>
               }
-            }}
-          >
-            {partInfo && partInfo.isFirst && (
-              <span
-                className="part-badge"
-                style={{
-                  fontSize: '8px',
-                  fontFamily: "'Cinzel', serif",
-                  fontWeight: 'bold',
-                  background: partInfo.border,
-                  color: '#111',
-                  padding: '1px 4px',
-                  borderRadius: '3px',
-                  marginLeft: '4px',
-                  lineHeight: 1,
-                  display: 'inline-block',
-                  userSelect: 'none'
-                }}
-              >
-                P{partInfo.partIndex + 1}
-              </span>
-            )}
-            {chars.map((c, ci) => (
-              <span key={ci} className="char-span" style={c.tajStyle}>{c.char}</span>
-            ))}
-          </span>
+            </span>
+            {wi < wordData.length - 1 ? ' ' : ''}
+          </React.Fragment>
         );
       })}
     </div>
@@ -243,8 +273,7 @@ export const PlayingArabicHighlighted = React.memo(function PlayingArabicHighlig
     if (!timestamps?.words) return null;
     const flat = [];
     timestamps.words.forEach(word => {
-      const chars = fixChars(word.chars || []);
-      chars.forEach(c => flat.push({ start: c.start, end: c.end }));
+      fixChars(word.chars || []).forEach(c => flat.push({ start: c.start, end: c.end }));
     });
     return flat;
   }, [timestamps]);
@@ -254,6 +283,7 @@ export const PlayingArabicHighlighted = React.memo(function PlayingArabicHighlig
   useEffect(() => {
     const flat = charDataRef.current;
     if (!flat || !containerRef.current) return;
+
     let curMs;
     let rangeStartMs = null;
     if (mode === 'main') {
@@ -266,19 +296,27 @@ export const PlayingArabicHighlighted = React.memo(function PlayingArabicHighlig
     } else {
       curMs = localPlaying?.currentMs ?? -1;
     }
+
     const spans = containerRef.current.querySelectorAll('.char-span');
     if (spans.length !== flat.length) return;
+
     flat.forEach(({ start, end }, i) => {
       const active = curMs >= start && curMs <= end;
       const done   = curMs > end && curMs > 0 && (rangeStartMs == null || end > rangeStartMs);
       const el = spans[i];
       if (active) {
-        if (!el.classList.contains('char-active')) { el.classList.add('char-active'); el.classList.remove('char-done'); }
+        if (!el.classList.contains('char-active')) {
+          el.classList.add('char-active');
+          el.classList.remove('char-done');
+        }
       } else if (done) {
-        if (!el.classList.contains('char-done')) { el.classList.add('char-done'); el.classList.remove('char-active'); }
+        if (!el.classList.contains('char-done')) {
+          el.classList.add('char-done');
+          el.classList.remove('char-active');
+        }
       } else {
         if (el.classList.contains('char-active') || el.classList.contains('char-done')) {
-          el.classList.remove('char-active','char-done');
+          el.classList.remove('char-active', 'char-done');
         }
       }
     });

@@ -6,7 +6,7 @@ import {
   setLDataThunk
 } from "../store";
 import { masteryColor, normalizeAr, arabicRoot } from "../utils/arabicUtils";
-import ArabicHighlighted from "./ArabicHighlighted";
+import ArabicHighlighted, { PlayingArabicHighlighted } from "./ArabicHighlighted";
 import Submenu from "./Submenu";
 import TsGlobalBar from "./TsGlobalBar";
 import MainPlayer from "./MainPlayer";
@@ -38,6 +38,11 @@ export default function QuranReaderPage({
   const showParts       = useSelector(sel.showParts);
   const showTsBar       = useSelector(sel.showTsBar);
   const showLoopBar     = useSelector(sel.showLoopBar);
+
+  const enableLetterByLetter = useSelector(sel.enableLetterByLetter);
+  const enableTimestamps     = useSelector(sel.enableTimestamps);
+  const playingPart          = useSelector(sel.playingPart);
+  const localPlaying         = useSelector(sel.localPlaying);
 
   const isMainPlaying   = useSelector(sel.isMainPlaying);
   const mainAyatIdx     = useSelector(sel.mainAyatIdx);
@@ -173,6 +178,18 @@ export default function QuranReaderPage({
     return collections.filter(c => (c.ayats || c.items || []).some(it => `${it.surahNum}:${it.ayatNum}` === key));
   }, [collections]);
 
+  // Auto-scroll to currently playing or opened verse
+  const scrollContainerRef = useRef(null);
+  useEffect(() => {
+    if (!scrollContainerRef.current) return;
+    const targetNum = playingAyatNum || openAyatNum;
+    if (targetNum == null) return;
+    const el = scrollContainerRef.current.querySelector(`[data-ayat="${targetNum}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [playingAyatNum, openAyatNum]);
+
   if (!selectedSurah) {
     return (
       <div className="empty-state">
@@ -256,6 +273,50 @@ export default function QuranReaderPage({
           >
             {pageMode ? '📖 MODE PAGE' : '📄 MODE SOURATE'}
           </button>
+
+          <label
+            style={{
+              fontSize: 8, letterSpacing: 1, padding: '4px 10px', borderRadius: 20,
+              fontFamily: "'Cinzel',serif", cursor: 'pointer',
+              background: 'rgba(62,184,160,.12)',
+              border: '1px solid var(--teal)',
+              color: 'var(--teal2)',
+              display: 'inline-flex', alignItems: 'center', gap: 4
+            }}
+          >
+            <input
+              type="file"
+              accept=".json"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  try {
+                    const parsed = JSON.parse(ev.target.result);
+                    if (parsed && typeof parsed === 'object') {
+                      if (parsed.numberInSurah || parsed.words) {
+                        const an = parsed.numberInSurah || 1;
+                        dispatch(playerActions.updateTimestamp({ [tskey(selectedSurah.number, an)]: parsed }));
+                      } else {
+                        const mapUpdates = {};
+                        Object.entries(parsed).forEach(([k, v]) => {
+                          if (k.includes(':')) mapUpdates[k] = v;
+                          else mapUpdates[`${recitatorId}:${selectedSurah.number}:${k}`] = v;
+                        });
+                        dispatch(playerActions.updateTimestamp(mapUpdates));
+                      }
+                    }
+                  } catch (err) {
+                    alert('Erreur lors de la lecture du fichier JSON: ' + err.message);
+                  }
+                };
+                reader.readAsText(file);
+              }}
+            />
+            📂 CHARGER TIMESTAMPS
+          </label>
         </div>
       </div>
 
@@ -309,7 +370,7 @@ export default function QuranReaderPage({
       />
 
       {/* Ayat scroll list */}
-      <div className="ayat-scroll">
+      <div className="ayat-scroll" ref={scrollContainerRef}>
         {(filteredAyats || []).map((a) => {
           const isPlaying = playingAyatNum === a.numberInSurah;
           const isOpen = openAyatNum === a.numberInSurah;
@@ -372,6 +433,7 @@ export default function QuranReaderPage({
           return (
             <div
               key={a.numberInSurah}
+              data-ayat={a.numberInSurah}
               className={`ayat-row${isPlaying ? " playing" : ""}${isOpen ? " current" : ""}${ld.learned ? " learned" : ""}`}
             >
               <div
@@ -379,9 +441,6 @@ export default function QuranReaderPage({
                 onClick={() => {
                   const newOpen = isOpen ? null : a.numberInSurah;
                   dispatch(quranActions.setOpenAyatNum(newOpen));
-                  if (!isOpen) {
-                    dispatch(quranActions.setSubmenuMode("lecture"));
-                  }
                 }}
               >
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, flexShrink: 0 }}>
@@ -409,21 +468,83 @@ export default function QuranReaderPage({
                 </div>
 
                 <div className="ayat-arabic">
-                  <ArabicHighlighted
-                    text={a.text}
-                    timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
-                    currentMs={isPlaying ? mainCurrentMs : 0}
-                    showQalqala={showQalqala}
-                    showMadd={showMadd}
-                    showIzhar={showIzhar}
-                    showIdgham={showIdgham}
-                    onWordClick={handleWordClick}
-                    ld={ld}
-                    partSelectAyat={partSelectAyat}
-                    partSelectStep={partSelectStep}
-                    partSelectStart={partSelectStart}
-                    ayatNum={a.numberInSurah}
-                  />
+                  {isPlaying && timestampsMap[tskey(selectedSurah.number, a.numberInSurah)] && enableLetterByLetter ? (
+                    <PlayingArabicHighlighted
+                      text={a.text}
+                      timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
+                      mode="main"
+                      playingPart={playingPart}
+                      showQalqala={showQalqala}
+                      showMadd={showMadd}
+                      showIzhar={showIzhar}
+                      showIdgham={showIdgham}
+                      onWordClick={handleWordClick}
+                      ld={ld}
+                      partSelectAyat={partSelectAyat}
+                      partSelectStep={partSelectStep}
+                      partSelectStart={partSelectStart}
+                      ayatNum={a.numberInSurah}
+                      showParts={showParts}
+                      aideMemoireClickMode={aideMemoireClickModes[a.numberInSurah] || null}
+                    />
+                  ) : playingPart?.ayatNum === a.numberInSurah && timestampsMap[tskey(selectedSurah.number, a.numberInSurah)] && enableLetterByLetter ? (
+                    <PlayingArabicHighlighted
+                      text={a.text}
+                      timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
+                      mode="part"
+                      playingPart={playingPart}
+                      showQalqala={showQalqala}
+                      showMadd={showMadd}
+                      showIzhar={showIzhar}
+                      showIdgham={showIdgham}
+                      onWordClick={handleWordClick}
+                      ld={ld}
+                      partSelectAyat={partSelectAyat}
+                      partSelectStep={partSelectStep}
+                      partSelectStart={partSelectStart}
+                      ayatNum={a.numberInSurah}
+                      showParts={showParts}
+                      aideMemoireClickMode={aideMemoireClickModes[a.numberInSurah] || null}
+                    />
+                  ) : localPlaying?.ayatNum === a.numberInSurah && timestampsMap[tskey(selectedSurah.number, a.numberInSurah)] && enableLetterByLetter ? (
+                    <PlayingArabicHighlighted
+                      text={a.text}
+                      timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
+                      mode="local"
+                      playingPart={playingPart}
+                      showQalqala={showQalqala}
+                      showMadd={showMadd}
+                      showIzhar={showIzhar}
+                      showIdgham={showIdgham}
+                      onWordClick={handleWordClick}
+                      ld={ld}
+                      partSelectAyat={partSelectAyat}
+                      partSelectStep={partSelectStep}
+                      partSelectStart={partSelectStart}
+                      ayatNum={a.numberInSurah}
+                      showParts={showParts}
+                      aideMemoireClickMode={aideMemoireClickModes[a.numberInSurah] || null}
+                    />
+                  ) : (
+                    <ArabicHighlighted
+                      text={a.text}
+                      timestamps={timestampsMap[tskey(selectedSurah.number, a.numberInSurah)]}
+                      currentMs={0}
+                      enableTimestamps={enableTimestamps}
+                      showQalqala={showQalqala}
+                      showMadd={showMadd}
+                      showIzhar={showIzhar}
+                      showIdgham={showIdgham}
+                      onWordClick={handleWordClick}
+                      ld={ld}
+                      partSelectAyat={partSelectAyat}
+                      partSelectStep={partSelectStep}
+                      partSelectStart={partSelectStart}
+                      ayatNum={a.numberInSurah}
+                      showParts={showParts}
+                      aideMemoireClickMode={aideMemoireClickModes[a.numberInSurah] || null}
+                    />
+                  )}
                 </div>
               </div>
 

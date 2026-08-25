@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useSelector } from "react-redux";
+import { sel } from "../store";
 import { TAJWEED_RULES, SAJDA_AYATS } from "../utils/quranData";
 import { splitArabicWords, splitArabicChars, isQalqala, getMaddType, isIzhar, isIdgham, arabicRoot } from "../utils/arabicUtils";
-import { fixChars } from "../services/quranApi";
 import { AyatCollectionsTab } from "./pages/CollectionsPage";
 import EditorWords from "./EditorWords";
 import VoiceRecorder from "./VoiceRecorder";
@@ -135,6 +136,7 @@ export function ToRevisePanel({ ayat, surahNum, ld, setLData }) {
 
   const splitChars = splitArabicChars;
   const gold = 'var(--gold)'; const gold2 = 'var(--gold2)';
+  const history = ld?.reviseHistory || [];
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:14, padding:'14px 16px' }}>
@@ -224,6 +226,39 @@ export function ToRevisePanel({ ayat, surahNum, ld, setLData }) {
                   border: `1px solid ${pSel ? gold : 'rgba(255,255,255,.1)'}`,
                   color: pSel ? gold2 : 'var(--text2)',
                 }}>PARTIE {pi + 1}</button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div style={{ display:'flex', flexDirection:'column', gap:8, borderTop:'1px solid var(--border)', paddingTop:12 }}>
+          <div style={{ fontSize:8, letterSpacing:1.5, color:'var(--text3)' }}>HISTORIQUE DES RÉVISIONS</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+            {history.slice(-5).reverse().map((h, idx) => {
+              const startStr = h.startDate ? new Date(h.startDate).toLocaleString() : 'Date inconnue';
+              const isCurrent = !h.endDate;
+              const wordsCount = Array.isArray(h.words) ? h.words.length : (h.words === 'all' ? 'Toutes' : 0);
+              return (
+                <div key={idx} style={{
+                  display:'flex', alignItems:'center', justifyContent:'space-between',
+                  padding:'6px 10px', background:'var(--surface3)', borderRadius:6,
+                  border:`1px solid ${isCurrent ? gold : 'var(--border)'}`, fontSize:8, fontFamily:"'Cinzel',serif"
+                }}>
+                  <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+                    <span style={{ color: isCurrent ? gold2 : 'var(--text2)' }}>{startStr}</span>
+                    <span style={{ color:'var(--text3)' }}>Mots: {wordsCount} · Parts: {(h.parts||[]).length}</span>
+                  </div>
+                  <span style={{
+                    padding:'2px 6px', borderRadius:4,
+                    background: isCurrent ? 'rgba(201,168,76,.15)' : 'rgba(255,255,255,.05)',
+                    color: isCurrent ? gold2 : 'var(--text3)',
+                    border: `1px solid ${isCurrent ? gold : 'var(--border2)'}`
+                  }}>
+                    {isCurrent ? 'EN COURS' : 'TERMINÉ'}
+                  </span>
+                </div>
               );
             })}
           </div>
@@ -410,65 +445,11 @@ export function AideMemoireMode({ ayat, surahNum, ld, setLData, clickMode, setCl
 export function DecouverteMode({ ayat, surahNum, ld, setLData, audioUrl, timestamps }) {
   const words = ayat.text ? ayat.text.split(' ').filter(Boolean) : [];
   const [revealedUpTo, setRevealedUpTo] = useState(-1);
-  const [markMode, setMarkMode]         = useState(false);
-  const [expandedWord, setExpandedWord] = useState(null);
-  const [playingWord, setPlayingWord]   = useState(null);
   const audioRef = useRef(null);
-  const seqTokenRef = useRef(0);
 
-  const hasToRevise = !!setLData;
-  const { isActive, selWords, selChars, toggleWord: toggleWordBase, toggleChar } =
-    useToRevise(ld, surahNum, ayat.numberInSurah, setLData);
+  const { isActive: isToReviseActive, selWords, toggleAll: toggleToRevise, toggleWord } = useToRevise(ld, surahNum, ayat.numberInSurah, setLData);
 
-  const toggleWord = (i) => {
-    const wasSelected = toggleWordBase(i);
-    if (wasSelected && expandedWord === i) setExpandedWord(null);
-  };
-
-  const hasTs = !!timestamps?.words;
-  const playWordAsync = (i, myToken) => {
-    return new Promise(resolve => {
-      const a = audioRef.current;
-      const word = timestamps?.words?.[i];
-      if (!a || !audioUrl || !word) { resolve(); return; }
-      const chars = fixChars(word.chars || []);
-      if (!chars.length) { resolve(); return; }
-      const startMs = chars[0].start;
-      const endMs   = chars[chars.length - 1].end;
-      if (a.src !== audioUrl) a.src = audioUrl;
-      a.currentTime = startMs / 1000;
-      setPlayingWord(i);
-      a.play().then(() => {
-        const checkEnd = () => {
-          if (!audioRef.current || seqTokenRef.current !== myToken) { resolve(); return; }
-          if (audioRef.current.currentTime * 1000 >= endMs) {
-            audioRef.current.pause();
-            resolve();
-            return;
-          }
-          requestAnimationFrame(checkEnd);
-        };
-        requestAnimationFrame(checkEnd);
-      }).catch(() => resolve());
-    });
-  };
-
-  const playWordsSequential = async (fromIdx, toIdx) => {
-    seqTokenRef.current += 1;
-    const myToken = seqTokenRef.current;
-    for (let i = fromIdx; i <= toIdx; i++) {
-      if (seqTokenRef.current !== myToken) return;
-      await playWordAsync(i, myToken);
-      if (seqTokenRef.current !== myToken) return;
-    }
-    setPlayingWord(null);
-  };
-
-  useEffect(() => () => { seqTokenRef.current += 1; audioRef.current?.pause(); }, []);
-
-  const displayNum = (i) => i + 1;
   const isRevealed = (i) => i <= revealedUpTo;
-
   const revealNext = () => setRevealedUpTo(v => Math.min(v + 1, words.length - 1));
   const reset      = () => setRevealedUpTo(-1);
   const revealAll  = () => setRevealedUpTo(words.length - 1);
@@ -481,21 +462,55 @@ export function DecouverteMode({ ayat, surahNum, ld, setLData, audioUrl, timesta
     <div style={{ display:'flex', flexDirection:'column', gap:14, padding:'14px 16px' }}>
       <audio ref={audioRef} style={{ display:'none' }} />
 
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div style={{ fontSize:9, letterSpacing:2, color:'var(--text3)' }}>👁 MODE DÉCOUVERTE</div>
+        <button
+          onClick={toggleToRevise}
+          style={{
+            fontSize:8, letterSpacing:1.5, padding:'4px 12px', borderRadius:6, cursor:'pointer',
+            fontFamily:"'Cinzel',serif", transition:'all .2s',
+            background: isToReviseActive ? 'rgba(201,168,76,.15)' : 'transparent',
+            border: `1px solid ${isToReviseActive ? 'var(--gold)' : 'rgba(255,255,255,.15)'}`,
+            color: isToReviseActive ? 'var(--gold2)' : 'var(--text3)',
+          }}
+        >
+          {isToReviseActive ? '🔖 À RÉVISER (MARQUÉ)' : '🔖 MARQUER À RÉVISER'}
+        </button>
+      </div>
+
       <div style={{ direction:'rtl', fontFamily:"'Amiri Quran',serif",
         lineHeight:2.4, textAlign:'center', padding:'12px 10px',
         background:'var(--surface3)', borderRadius:10, border:'1px solid var(--border)',
         display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center', alignItems:'flex-end' }}>
         {words.map((w, i) => {
           const rev = isRevealed(i);
+          const isMarked = selWords.includes(i);
           return (
-            <span key={i} onClick={() => !rev && setRevealedUpTo(i)} style={{
-              display:'inline-block', padding:'2px 8px', borderRadius:6,
-              fontFamily:"'Amiri Quran',serif", fontSize: rev ? 22 : 20,
-              color: rev ? 'var(--text1)' : 'transparent',
-              background: rev ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.07)',
-              border: '1px solid rgba(255,255,255,.18)',
-              minWidth: rev ? 0 : 34, textAlign:'center', cursor:'pointer',
-            }}>{rev ? w : '▪▪▪'}</span>
+            <span
+              key={i}
+              onClick={() => {
+                if (!rev) {
+                  setRevealedUpTo(i);
+                } else {
+                  toggleWord(i);
+                }
+              }}
+              style={{
+                display:'inline-block', padding:'2px 8px', borderRadius:6,
+                fontFamily:"'Amiri Quran',serif", fontSize: rev ? 22 : 20,
+                color: rev ? (isMarked ? 'var(--gold2)' : 'var(--text1)') : 'transparent',
+                background: isMarked
+                  ? 'rgba(201,168,76,.18)'
+                  : rev ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.07)',
+                border: isMarked
+                  ? '1px solid var(--gold)'
+                  : '1px solid rgba(255,255,255,.18)',
+                minWidth: rev ? 0 : 34, textAlign:'center', cursor:'pointer',
+                transition:'all .15s ease'
+              }}
+            >
+              {rev ? w : '▪▪▪'}
+            </span>
           );
         })}
       </div>

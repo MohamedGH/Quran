@@ -21,7 +21,7 @@ export default function CloudSyncManager({ uid }) {
   const saveTimerRef      = useRef(null);
 
   const pullFromCloud = useCallback(async () => {
-    if (!uid) return;
+    if (!uid || uid === "demo-user") return;
     try {
       addSyncLog("info", "Lecture données cloud...");
       const docRef = doc(firebaseDb, "users", uid);
@@ -63,7 +63,7 @@ export default function CloudSyncManager({ uid }) {
         }
         if (cloudData.lastAyatBySurah) {
           Object.entries(cloudData.lastAyatBySurah).forEach(([sn, an]) => {
-            dispatch(quranActions.setLastAyat({ surahNum: Number(sn), ayatNum: Number(an) }));
+              dispatch(quranActions.setLastAyatForSurah({ surahNum: Number(sn), ayatNum: Number(an) }));
           });
         }
         if (cloudData.revisionMastery) {
@@ -81,7 +81,7 @@ export default function CloudSyncManager({ uid }) {
   }, [uid, dispatch]);
 
   const pushToCloud = useCallback(async () => {
-    if (!uid || !isInitialPullDone.current) return;
+    if (!uid || uid === "demo-user" || !isInitialPullDone.current) return;
     try {
       addSyncLog("info", "Sauvegarde automatique dans le cloud...");
       const docRef = doc(firebaseDb, "users", uid);
@@ -106,40 +106,46 @@ export default function CloudSyncManager({ uid }) {
   }, [uid, learnData, collections, activity, goals, loopBySurah, lastAyatBySurah, revisionMastery]);
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || uid === "demo-user") return;
     pullFromCloud();
   }, [uid, pullFromCloud]);
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || uid === "demo-user") return;
     const docRef = doc(firebaseDb, "users", uid);
-    const unsub = onSnapshot(docRef, (snap) => {
-      if (snap.exists()) {
-        const d = snap.data();
-        if (d.deviceId && d.deviceId !== getDeviceId() && isInitialPullDone.current) {
-          addSyncLog("info", `Mise à jour distante détectée (${d.deviceId}) — fusion...`);
-          if (d.learnData) {
-            Object.entries(d.learnData).forEach(([key, data]) => {
-              if (key.includes(":")) {
-                const [sn, an] = key.split(":").map(Number);
-                if (!isNaN(sn) && !isNaN(an) && data) {
-                  dispatch(setLDataThunk(sn, an, () => data));
-                }
-              } else if (data && typeof data === "object") {
-                Object.entries(data).forEach(([an, item]) => {
-                  const snNum = Number(key);
-                  const anNum = Number(an);
-                  if (!isNaN(snNum) && !isNaN(anNum) && item) {
-                    dispatch(setLDataThunk(snNum, anNum, () => item));
+    const unsub = onSnapshot(
+      docRef,
+      (snap) => {
+        if (snap.exists()) {
+          const d = snap.data();
+          if (d.deviceId && d.deviceId !== getDeviceId() && isInitialPullDone.current) {
+            addSyncLog("info", `Mise à jour distante détectée (${d.deviceId}) — fusion...`);
+            if (d.learnData) {
+              Object.entries(d.learnData).forEach(([key, data]) => {
+                if (key.includes(":")) {
+                  const [sn, an] = key.split(":").map(Number);
+                  if (!isNaN(sn) && !isNaN(an) && data) {
+                    dispatch(setLDataThunk(sn, an, () => data));
                   }
-                });
-              }
-            });
+                } else if (data && typeof data === "object") {
+                  Object.entries(data).forEach(([an, item]) => {
+                    const snNum = Number(key);
+                    const anNum = Number(an);
+                    if (!isNaN(snNum) && !isNaN(anNum) && item) {
+                      dispatch(setLDataThunk(snNum, anNum, () => item));
+                    }
+                  });
+                }
+              });
+            }
+            if (d.collections) dispatch(collectionsActions.setCollections(d.collections));
           }
-          if (d.collections) dispatch(collectionsActions.setCollections(d.collections));
         }
+      },
+      (err) => {
+        addSyncLog("err", `Snapshot listener disabled: ${err.message}`);
       }
-    });
+    );
     return unsub;
   }, [uid, dispatch]);
 

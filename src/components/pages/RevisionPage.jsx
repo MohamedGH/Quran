@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { computeMastery, masteryColor, splitArabicWords } from "../../utils/arabicUtils";
 import "./RevisionPage.css";
 

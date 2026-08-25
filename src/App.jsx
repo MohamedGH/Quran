@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { Provider, useSelector, useDispatch, shallowEqual } from "react-redux";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, getRedirectResult, signOut } from "firebase/auth";
 import { firebaseAuth } from "./services/firebase";
 import "./App.css";
 
@@ -69,6 +69,19 @@ function AppInner({ currentUser, onSignOut }) {
     if (!text) { setSelMenu(null); return; }
     e.preventDefault();
     setSelMenu({ x: e.clientX, y: e.clientY, text });
+  };
+
+  const handleCreateCollectionFromSelection = (colName) => {
+    if (!selMenu?.text) return;
+    dispatch(collectionsActions.createCollectionWithAyat({
+      name: colName || "Sélection textuelle",
+      ayatEntry: {
+        surahNum: selectedSurah || 1,
+        ayatNum: openAyatNum || 1,
+        text: selMenu.text,
+      }
+    }));
+    setSelMenu(null);
   };
 
   const urlSegs         = location.pathname.replace(/^\//, '').split('/');
@@ -233,6 +246,54 @@ function AppInner({ currentUser, onSignOut }) {
           </aside>
 
           <main className="main" onContextMenu={handleAyatContextMenu}>
+            {selMenu && (
+              <div
+                style={{
+                  position: "fixed",
+                  top: selMenu.y,
+                  left: selMenu.x,
+                  zIndex: 9999,
+                  background: "var(--surface2)",
+                  border: "1px solid var(--gold)",
+                  borderRadius: "8px",
+                  padding: "8px 12px",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px"
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div style={{ fontSize: "8px", color: "var(--text3)", letterSpacing: "1px" }}>
+                  SÉLECTION: "{selMenu.text.slice(0, 18)}{selMenu.text.length > 18 ? "..." : ""}"
+                </div>
+                <button
+                  className="btn-small"
+                  onClick={() => {
+                    setPendingSearchQuery(selMenu.text);
+                    navigate("/collections");
+                    setSelMenu(null);
+                  }}
+                  style={{ color: "var(--gold2)", borderColor: "var(--gold)" }}
+                >
+                  🔍 RECHERCHER DANS COLLECTIONS
+                </button>
+                <button
+                  className="btn-small"
+                  onClick={() => handleCreateCollectionFromSelection("Ma collection")}
+                  style={{ color: "#c878ff", borderColor: "#c878ff" }}
+                >
+                  ➕ CRÉER SÉLECTION
+                </button>
+                <button
+                  className="btn-small"
+                  onClick={() => setSelMenu(null)}
+                  style={{ color: "var(--text3)" }}
+                >
+                  ✕ FERMER
+                </button>
+              </div>
+            )}
             <Routes>
               <Route path="/" element={<Navigate to="/quran/1/1" replace />} />
               <Route path="/quran/:surahNum?/:ayatNum?" element={
@@ -273,6 +334,14 @@ export default function App() {
 
   useEffect(() => {
     try {
+      getRedirectResult(firebaseAuth).then((result) => {
+        if (result?.user) {
+          setUser(result.user);
+        }
+      }).catch((err) => {
+        console.warn("[getRedirectResult]", err);
+      });
+
       const unsub = onAuthStateChanged(firebaseAuth, (u) => {
         setUser(u);
         setAuthReady(true);

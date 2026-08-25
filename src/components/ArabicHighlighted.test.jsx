@@ -18,4 +18,22 @@ describe('ArabicHighlighted Component Tests', () => {
     render(<ArabicHighlighted text="بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ" ld={ld} />);
     expect(screen.getByText('P1')).toBeInTheDocument();
   });
+
+  it('applies active word class when currentMs matches timestamp range', () => {
+    const timestamps = {
+      words: [
+        { chars: [{ char: 'ب', start: 100, end: 200 }] },
+        { chars: [{ char: 'ا', start: 300, end: 400 }] }
+      ]
+    };
+    const { container } = render(
+      <ArabicHighlighted
+        text="ب ا"
+        timestamps={timestamps}
+        currentMs={150}
+      />
+    );
+    const activeWord = container.querySelector('.word-active');
+    expect(activeWord).toBeInTheDocument();
+  });
 });
