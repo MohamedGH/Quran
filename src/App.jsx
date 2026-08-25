@@ -14641,6 +14641,8 @@ function CollectionAyatRow({ entry, collId, learnData, setLData, onToggleAyat, o
 
   const inCollIds = ayatInCollectionsFn ? ayatInCollectionsFn(entry.surahNum, entry.ayatNum) : [];
   const surahInfo = SURAH_INFO.find(s => s.n === entry.surahNum);
+  const mastery = computeMastery(ld, entry.text);
+  const ts = timestampsMapRef.current?.[tskey(entry.surahNum, entry.ayatNum)];
 
   return (
     <div
@@ -14676,8 +14678,11 @@ function CollectionAyatRow({ entry, collId, learnData, setLData, onToggleAyat, o
           <div className="ayat-number-badge">{entry.ayatNum}</div>
         </div>
         {renderAyatText()}
-        <div style={{ display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end",flexShrink:0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end", flexShrink: 0 }}>
           {ld.learned && <div className="ayat-learned-badge">✓ APPRIS</div>}
+          {ld.toRevise && <div style={{ fontSize:7, letterSpacing:1, padding:'2px 6px', borderRadius:8, border:'1px solid var(--gold)', color:'var(--gold2)', fontFamily:"'Cinzel',serif" }}>🔖 RÉVISER</div>}
+          {mastery > 0 && <div style={{ fontSize:8, letterSpacing:1, padding:'2px 7px', borderRadius:10, border:'1px solid '+masteryColor(mastery), color:masteryColor(mastery), fontFamily:"'Cinzel',serif" }}>{mastery}%</div>}
+          {ts && <div className="ts-status loaded">⚡ TS</div>}
         </div>
       </div>
 
