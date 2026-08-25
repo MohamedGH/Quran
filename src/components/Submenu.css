@@ -1,0 +1,107 @@
+/* Submenu & Recitation Styles */
+
+@keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
+.page-anim { animation: pageIn .12s ease forwards; flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; width: 100%; }
+
+@keyframes submenuIn { 0% { opacity: 0; transform: translateY(-4px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes submenuOut { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-4px); } }
+
+.submenu { background: var(--surface2); border-top: 1px solid var(--border); padding: 14px 22px 18px; }
+.submenu-anim-wrap { animation: submenuIn .32s cubic-bezier(.4, 0, .2, 1) forwards; }
+.submenu-anim-wrap.closing { animation: submenuOut .24s cubic-bezier(.4, 0, .2, 1) forwards; }
+.submenu-header { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 14px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+.submenu-header::-webkit-scrollbar { display: none; }
+
+.mode-btn { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 1.5px; padding: 8px 14px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text3); cursor: pointer; transition: all var(--transition); white-space: nowrap; flex-shrink: 0; }
+.mode-btn:hover { color: var(--text2); }
+.mode-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.submenu-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 14px; overflow-x: auto; }
+.submenu-tab { font-size: 9px; letter-spacing: 1.5px; color: var(--text3); padding: 8px 14px; background: transparent; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all var(--transition); white-space: nowrap; flex-shrink: 0; }
+.submenu-tab:hover { color: var(--text2); }
+.submenu-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* Buttons */
+.btn-primary { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 1.5px; padding: 8px 16px; border: 1px solid var(--gold); background: transparent; color: var(--gold); cursor: pointer; border-radius: var(--radius-sm); transition: all var(--transition); }
+.btn-primary:hover { background: rgba(201, 168, 76, .12); }
+.btn-primary.active { background: var(--gold); color: var(--bg); }
+.btn-primary:disabled { opacity: .35; cursor: not-allowed; }
+.btn-small { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 1px; padding: 5px 10px; border: 1px solid var(--border2); background: transparent; color: var(--text3); cursor: pointer; border-radius: var(--radius-sm); transition: all var(--transition); }
+.btn-small:hover { border-color: var(--text2); color: var(--text2); }
+.btn-small.done { border-color: var(--green); color: var(--green); }
+
+/* Learn Section */
+.learn-section { display: flex; flex-direction: column; gap: 14px; }
+.learn-status-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.learn-stat { font-size: 10px; letter-spacing: 1px; color: var(--text3); display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--surface3); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.learn-stat .val { color: var(--gold2); }
+.learn-stat.learned-stat { border-color: var(--green); color: var(--green); }
+.learn-stat.learned-stat .val { color: var(--green2); }
+.parts-title { font-size: 9px; letter-spacing: 2px; color: var(--text3); margin-bottom: 8px; }
+.create-mode-hint { font-size: 9px; letter-spacing: 1px; color: var(--teal); margin-bottom: 6px; padding: 6px 10px; background: rgba(62, 184, 160, .06); border-radius: var(--radius-sm); }
+.words-area { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; direction: rtl; justify-content: flex-end; }
+.word-btn { font-family: 'Amiri Quran', serif; font-size: 18px; padding: 4px 8px; border: 1px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; border-radius: var(--radius-sm); transition: all var(--transition); }
+.word-btn:hover { border-color: var(--gold); color: var(--gold); }
+.word-btn.word-learned { border-color: var(--green); color: var(--green2); background: rgba(76, 175, 129, .06); }
+.parts-divider { height: 1px; background: var(--border); margin: 8px 0; }
+.part-item { border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; overflow: hidden; }
+.part-item.part-learned { border-color: var(--learned-border); background: rgba(26, 46, 32, .3); }
+.part-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--surface3); }
+.part-label { font-size: 10px; letter-spacing: 1px; color: var(--text3); flex: 1; }
+.part-arabic { font-family: 'Amiri Quran', serif; font-size: 18px; direction: rtl; text-align: right; padding: 8px 12px 10px; color: var(--text2); line-height: 1.8; }
+.part-learned .part-arabic { color: var(--green2); }
+
+/* Recitation Section */
+.recit-section { display: flex; flex-direction: column; gap: 0; margin-top: 0; padding-top: 16px; border-top: 1px solid var(--border); }
+.recit-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.recit-title { font-size: 9px; letter-spacing: 3px; color: var(--text3); display: flex; align-items: center; gap: 8px; font-family: 'Cinzel', serif; }
+.recit-title-icon { width: 26px; height: 26px; border-radius: 50%; background: rgba(62, 184, 160, .12); border: 1px solid var(--teal); display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.recit-tabs { display: flex; gap: 0; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 14px; }
+.recit-tab { flex: 1; padding: 8px 4px; font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 1.5px; background: transparent; color: var(--text3); border: none; cursor: pointer; transition: all var(--transition); text-align: center; }
+.recit-tab:hover { background: rgba(255, 255, 255, .04); color: var(--text2); }
+.recit-tab.active { background: rgba(62, 184, 160, .1); color: var(--teal); border-bottom: 2px solid var(--teal); }
+.recit-mic-zone { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 16px; background: var(--surface3); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; transition: border-color .3s; }
+.recit-mic-zone.active { border-color: var(--red); background: rgba(224, 90, 90, .04); }
+.recit-mic-circle { width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--teal); background: rgba(62, 184, 160, .08); display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; transition: all .25s; position: relative; touch-action: manipulation; }
+.recit-mic-circle:hover, .recit-mic-circle:active { transform: scale(1.06); background: rgba(62, 184, 160, .16); }
+.recit-mic-circle.recording { border-color: var(--red); background: rgba(224, 90, 90, .12); animation: micPulse 1s ease-in-out infinite; }
+@keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(224, 90, 90, .4); } 50% { box-shadow: 0 0 0 12px rgba(224, 90, 90, 0); } }
+.recit-mic-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 2px; color: var(--text3); }
+.recit-mic-label.recording { color: var(--red); }
+.recit-live-box { width: 100%; min-height: 40px; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 14px; font-family: 'Amiri Quran', serif; font-size: 18px; direction: rtl; text-align: right; color: var(--text2); line-height: 1.8; transition: border-color .2s; }
+.recit-live-box.has-text { border-color: var(--teal); }
+.recit-live-placeholder { color: var(--text3); font-family: 'Cinzel', serif; font-size: 9px; direction: ltr; text-align: center; letter-spacing: 1px; padding: 4px 0; }
+.recit-textarea { width: 100%; background: var(--surface3); border: 1px solid var(--border2); border-radius: var(--radius); padding: 12px 16px; color: var(--text); font-family: 'Amiri Quran', serif; font-size: 22px; direction: rtl; text-align: right; resize: none; outline: none; line-height: 1.8; transition: border-color var(--transition); margin-bottom: 8px; }
+.recit-textarea:focus { border-color: var(--gold); }
+.recit-textarea::placeholder { color: var(--text3); font-family: 'Cinzel', serif; font-size: 11px; direction: ltr; text-align: left; }
+.recit-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.recit-score-ring { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px; background: var(--surface3); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px; }
+.recit-score-arc { position: relative; width: 80px; height: 80px; }
+.recit-score-arc svg { transform: rotate(-90deg); }
+.recit-score-arc-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-size: 20px; font-weight: 700; letter-spacing: -1px; }
+.recit-score-arc-num.perfect { color: var(--green2); }
+.recit-score-arc-num.good { color: var(--gold2); }
+.recit-score-arc-num.bad { color: var(--red); }
+.recit-score-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 2px; }
+.recit-score-label.perfect { color: var(--green2); }
+.recit-score-label.good { color: var(--gold2); }
+.recit-score-label.bad { color: var(--red); }
+.recit-compare { font-family: 'Amiri Quran', serif; font-size: 26px; direction: rtl; text-align: right; line-height: 2.4; padding: 12px 16px; background: var(--surface3); border-radius: var(--radius); border: 1px solid var(--border); }
+.recit-char-ok { color: var(--green2); }
+.recit-char-near { color: #e8a020; text-decoration: underline wavy #e8a020; }
+.recit-char-err { color: var(--red); text-decoration: underline wavy var(--red); }
+.recit-char-miss { color: var(--border2); text-decoration: underline dotted var(--text3); }
+.recit-char-silent { color: var(--gold); opacity: 0.65; font-style: italic; }
+.recit-wasl-fatha { color: var(--gold2); }
+.recit-wasl-damma { color: var(--teal); }
+.recit-wasl-kasra { color: var(--text2); }
+.recit-word-wrap { display: inline; margin: 0 3px; }
+.recit-word-wrap.word-ok { border-bottom: 2px solid rgba(76, 175, 129, .35); }
+.recit-word-wrap.word-err { border-bottom: 2px solid rgba(224, 90, 90, .4); }
+.recit-word-wrap.word-del { color: var(--red); opacity: .5; text-decoration: line-through; }
+.recit-legend { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
+.recit-legend-pill { display: inline-flex; align-items: center; gap: 4px; font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 1px; padding: 3px 8px; border-radius: 20px; opacity: .85; }
+.recit-replay { font-family: 'Amiri Quran', serif; font-size: 17px; direction: rtl; text-align: right; color: var(--text3); padding: 8px 12px; background: var(--surface3); border-radius: var(--radius-sm); border: 1px solid var(--border); margin-top: 8px; line-height: 1.8; }
+.recit-debug-toggle { margin-top: 12px; width: 100%; text-align: center; }
+.recit-debug-table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: monospace; direction: ltr; }
+.recit-debug-table th { padding: 4px 8px; border-bottom: 1px solid var(--border); color: var(--text3); font-size: 9px; letter-spacing: 1px; white-space: nowrap; background: var(--surface3); }
+.recit-debug-table td { padding: 4px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
