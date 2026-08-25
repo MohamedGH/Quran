@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { Provider, useSelector, useDispatch, shallowEqual } from "react-redux";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, getRedirectResult, signOut } from "firebase/auth";
 import { firebaseAuth } from "./services/firebase";
 import "./App.css";
 
@@ -334,6 +334,14 @@ export default function App() {
 
   useEffect(() => {
     try {
+      getRedirectResult(firebaseAuth).then((result) => {
+        if (result?.user) {
+          setUser(result.user);
+        }
+      }).catch((err) => {
+        console.warn("[getRedirectResult]", err);
+      });
+
       const unsub = onAuthStateChanged(firebaseAuth, (u) => {
         setUser(u);
         setAuthReady(true);
