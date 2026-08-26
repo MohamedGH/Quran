@@ -5,13 +5,13 @@ import {
   sel, uiActions, quranActions, playerActions, collectionsActions,
   setLDataThunk
 } from "../store";
-import { masteryColor, normalizeAr, arabicRoot } from "../utils/arabicUtils";
+import { masteryColor, computeMastery, normalizeAr, arabicRoot } from "../utils/arabicUtils";
 import ArabicHighlighted, { PlayingArabicHighlighted } from "./ArabicHighlighted";
 import Submenu from "./Submenu";
 import TsGlobalBar from "./TsGlobalBar";
 import MainPlayer from "./MainPlayer";
 import { CollectionModal } from "./pages/CollectionsPage";
-import { getAudioBase, setGlobalRecitator, markBitrateBad } from "../services/quranApi";
+import { getAudioBase, setGlobalRecitator, markBitrateBad, fetchSurahMeta, fetchPageMeta } from "../services/quranApi";
 
 export default function QuranReaderPage({
   currentUser,
@@ -70,6 +70,9 @@ export default function QuranReaderPage({
   const [partSelectStart, setPartSelectStart] = useState(null);
   const [aideMemoireClickModes, setAideMemoireClickModes] = useState({});
   const [collModal, setCollModal]           = useState(null);
+  const [showSurahInfo, setShowSurahInfo]   = useState(false);
+  const [surahMeta, setSurahMeta]           = useState(null);
+  const [pageMeta, setPageMeta]             = useState(null);
 
   const selectedSurah = (surahs || []).find(s => s.number === selectedSurahNum) || null;
   const currentMainAyat = ayats[mainAyatIdx] || null;
@@ -82,6 +85,19 @@ export default function QuranReaderPage({
   useEffect(() => {
     setGlobalRecitator(recitatorId);
   }, [recitatorId]);
+
+  useEffect(() => {
+    if (selectedSurahNum) {
+      fetchSurahMeta(selectedSurahNum).then(m => setSurahMeta(m)).catch(() => {});
+    }
+  }, [selectedSurahNum]);
+
+  const curPage = pageMode ? (activePageCoran ?? ayats[mainAyatIdx]?.page ?? null) : null;
+  useEffect(() => {
+    if (curPage) {
+      fetchPageMeta(curPage).then(m => setPageMeta(m)).catch(() => {});
+    }
+  }, [curPage]);
 
   const handleSetLData = (surahNum, ayatNum, updater) => {
     dispatch(setLDataThunk(surahNum, ayatNum, updater));
@@ -245,79 +261,145 @@ export default function QuranReaderPage({
           {selectedSurah.englishName.toUpperCase()} · {selectedSurah.numberOfAyahs} AYATS
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-          {ayats.length > 0 && (
-            <button
-              onClick={isSurahFullyLearned ? unmarkAllLearned : markAllLearned}
-              style={{
-                fontSize: 8, letterSpacing: 1, padding: '4px 10px', borderRadius: 20,
-                fontFamily: "'Cinzel',serif", cursor: 'pointer',
-                background: isSurahFullyLearned ? 'rgba(76,175,129,.15)' : 'transparent',
-                border: `1px solid ${isSurahFullyLearned ? 'var(--green)' : 'rgba(255,255,255,.1)'}`,
-                color: isSurahFullyLearned ? 'var(--green)' : 'var(--text3)',
-              }}
-            >
-              {isSurahFullyLearned ? '✓ APPRISE' : 'MARQUER APPRISE'}
-            </button>
-          )}
+        {(() => {
+          const totalAyats = ayats.length || 1;
+          const totalMasterySum = ayats.reduce((sum, a) => {
+            const ldEntry = learnData[`${selectedSurah.number}:${a.numberInSurah}`];
+            return sum + computeMastery(ldEntry, a.text);
+          }, 0);
+          const totalMasteryPct = Math.round(totalMasterySum / totalAyats);
 
-          <button
-            onClick={() => setPageMode(!pageMode)}
-            style={{
-              fontSize: 8, letterSpacing: 1, padding: '4px 10px', borderRadius: 20,
-              fontFamily: "'Cinzel',serif", cursor: 'pointer',
-              background: pageMode ? 'rgba(200,120,255,.15)' : 'transparent',
-              border: `1px solid ${pageMode ? '#c878ff' : 'rgba(255,255,255,.1)'}`,
-              color: pageMode ? '#c878ff' : 'var(--text3)',
-            }}
-          >
-            {pageMode ? '📖 MODE PAGE' : '📄 MODE SOURATE'}
-          </button>
+          const sn = selectedSurah.number;
+          const pageAyats = curPage ? ayats.filter(a => a.page === curPage) : ayats;
+          const totalParts = pageAyats.reduce((s, a) => s + (learnData[`${sn}:${a.numberInSurah}`]?.parts?.length || 0), 0);
+          const totalUnk   = pageAyats.reduce((s, a) => s + (learnData[`${sn}:${a.numberInSurah}`]?.unknownWords?.length || 0), 0);
+          const meta = pageMode && pageMeta ? pageMeta : surahMeta;
 
-          <label
-            style={{
-              fontSize: 8, letterSpacing: 1, padding: '4px 10px', borderRadius: 20,
-              fontFamily: "'Cinzel',serif", cursor: 'pointer',
-              background: 'rgba(62,184,160,.12)',
-              border: '1px solid var(--teal)',
-              color: 'var(--teal2)',
-              display: 'inline-flex', alignItems: 'center', gap: 4
-            }}
-          >
-            <input
-              type="file"
-              accept=".json"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                  try {
-                    const parsed = JSON.parse(ev.target.result);
-                    if (parsed && typeof parsed === 'object') {
-                      if (parsed.numberInSurah || parsed.words) {
-                        const an = parsed.numberInSurah || 1;
-                        dispatch(playerActions.updateTimestamp({ [tskey(selectedSurah.number, an)]: parsed }));
-                      } else {
-                        const mapUpdates = {};
-                        Object.entries(parsed).forEach(([k, v]) => {
-                          if (k.includes(':')) mapUpdates[k] = v;
-                          else mapUpdates[`${recitatorId}:${selectedSurah.number}:${k}`] = v;
-                        });
-                        dispatch(playerActions.updateTimestamp(mapUpdates));
-                      }
-                    }
-                  } catch (err) {
-                    alert('Erreur lors de la lecture du fichier JSON: ' + err.message);
-                  }
-                };
-                reader.readAsText(file);
-              }}
-            />
-            📂 CHARGER TIMESTAMPS
-          </label>
-        </div>
+          const pills = pageMode && curPage ? [
+            { label: 'PAGE',    val: curPage, color: '#c878ff' },
+            { label: 'HIZB',    val: meta?.hizb ?? '…', color: '#ffd166' },
+            { label: 'JUZ',     val: meta?.juz ?? '…', color: '#a8edea' },
+            { label: 'AYATS',   val: meta?.ayatCount ?? pageAyats.length, color: 'var(--gold2)' },
+            { label: 'MOTS',    val: meta?.wordCount ?? '…', color: '#5bc8f5' },
+            { label: 'PARTIES', val: totalParts, color: '#c878ff' },
+            { label: 'INCONNUS',val: totalUnk, color: totalUnk > 0 ? '#ff9f43' : 'var(--text3)' },
+          ] : [
+            { label: 'HIZB',    val: surahMeta?.hizb ?? '…', color: '#ffd166' },
+            { label: 'AYATS',   val: selectedSurah.numberOfAyahs, color: 'var(--gold2)' },
+            { label: 'MOTS',    val: surahMeta?.wordCount ?? '…', color: '#5bc8f5' },
+            { label: 'PARTIES', val: totalParts, color: '#c878ff' },
+            { label: 'INCONNUS',val: totalUnk, color: totalUnk > 0 ? '#ff9f43' : 'var(--text3)' },
+          ];
+
+          const infoLabel = pageMode && curPage ? `PAGE ${curPage}` : `SOURATE`;
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginTop: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, border: `1px solid ${masteryColor(totalMasteryPct)}`, background: 'rgba(255,255,255,.03)' }}>
+                  <span style={{ fontSize: 9 }}>🎯</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "'Cinzel',serif", color: masteryColor(totalMasteryPct) }}>{totalMasteryPct}%</span>
+                </div>
+
+                <button
+                  onClick={() => setShowSurahInfo(v => !v)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    fontSize: 8, letterSpacing: 1, padding: '4px 10px', borderRadius: 20,
+                    fontFamily: "'Cinzel',serif", cursor: 'pointer', whiteSpace: 'nowrap',
+                    background: showSurahInfo ? 'rgba(255,255,255,.06)' : 'transparent',
+                    border: '1px solid ' + (showSurahInfo ? 'rgba(255,255,255,.25)' : 'rgba(255,255,255,.1)'),
+                    color: showSurahInfo ? 'var(--text2)' : 'var(--text3)', transition: 'all .2s'
+                  }}
+                >
+                  ℹ {infoLabel} {showSurahInfo ? '▲' : '▼'}
+                </button>
+
+                {ayats.length > 0 && (
+                  <button
+                    onClick={isSurahFullyLearned ? unmarkAllLearned : markAllLearned}
+                    style={{
+                      fontSize: 8, letterSpacing: 1, padding: '4px 10px', borderRadius: 20,
+                      fontFamily: "'Cinzel',serif", cursor: 'pointer',
+                      background: isSurahFullyLearned ? 'rgba(76,175,129,.15)' : 'transparent',
+                      border: `1px solid ${isSurahFullyLearned ? 'var(--green)' : 'rgba(255,255,255,.1)'}`,
+                      color: isSurahFullyLearned ? 'var(--green)' : 'var(--text3)',
+                    }}
+                  >
+                    {isSurahFullyLearned ? '✓ APPRISE' : 'MARQUER APPRISE'}
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setPageMode(!pageMode)}
+                  style={{
+                    fontSize: 8, letterSpacing: 1, padding: '4px 10px', borderRadius: 20,
+                    fontFamily: "'Cinzel',serif", cursor: 'pointer',
+                    background: pageMode ? 'rgba(200,120,255,.15)' : 'transparent',
+                    border: `1px solid ${pageMode ? '#c878ff' : 'rgba(255,255,255,.1)'}`,
+                    color: pageMode ? '#c878ff' : 'var(--text3)',
+                  }}
+                >
+                  {pageMode ? '📖 MODE PAGE' : '📄 MODE SOURATE'}
+                </button>
+
+                <label
+                  style={{
+                    fontSize: 8, letterSpacing: 1, padding: '4px 10px', borderRadius: 20,
+                    fontFamily: "'Cinzel',serif", cursor: 'pointer',
+                    background: 'rgba(62,184,160,.12)',
+                    border: '1px solid var(--teal)',
+                    color: 'var(--teal2)',
+                    display: 'inline-flex', alignItems: 'center', gap: 4
+                  }}
+                >
+                  <input
+                    type="file"
+                    accept=".json"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        try {
+                          const parsed = JSON.parse(ev.target.result);
+                          if (parsed && typeof parsed === 'object') {
+                            if (parsed.numberInSurah || parsed.words) {
+                              const an = parsed.numberInSurah || 1;
+                              dispatch(playerActions.updateTimestamp({ [tskey(selectedSurah.number, an)]: parsed }));
+                            } else {
+                              const mapUpdates = {};
+                              Object.entries(parsed).forEach(([k, v]) => {
+                                if (k.includes(':')) mapUpdates[k] = v;
+                                else mapUpdates[`${recitatorId}:${selectedSurah.number}:${k}`] = v;
+                              });
+                              dispatch(playerActions.updateTimestamp(mapUpdates));
+                            }
+                          }
+                        } catch (err) {
+                          alert('Erreur lors de la lecture du fichier JSON: ' + err.message);
+                        }
+                      };
+                      reader.readAsText(file);
+                    }}
+                  />
+                  📂 CHARGER TIMESTAMPS
+                </label>
+              </div>
+
+              {showSurahInfo && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginTop: 4 }}>
+                  {pills.map((p, pi) => (
+                    <div key={pi} className="learn-stat" style={{ padding: '3px 8px', fontSize: 8 }}>
+                      {p.label} <span className="val" style={{ color: p.color }}>{p.val}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Page mode top navigation bar */}
@@ -545,6 +627,13 @@ export default function QuranReaderPage({
                       aideMemoireClickMode={aideMemoireClickModes[a.numberInSurah] || null}
                     />
                   )}
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end", flexShrink: 0 }}>
+                  {ld.learned && <div className="ayat-learned-badge">✓ APPRIS</div>}
+                  {ld.toRevise && <div style={{ fontSize: 7, letterSpacing: 1, padding: '2px 6px', borderRadius: 8, border: '1px solid var(--gold)', color: 'var(--gold2)', fontFamily: "'Cinzel',serif" }}>🔖 RÉVISER</div>}
+                  {(() => { const m = computeMastery(ld, a.text); return m > 0 ? <div style={{ fontSize: 8, letterSpacing: 1, padding: '2px 7px', borderRadius: 10, border: '1px solid ' + masteryColor(m), color: masteryColor(m), fontFamily: "'Cinzel',serif" }}>{m}%</div> : null; })()}
+                  {timestampsMap[tskey(selectedSurah.number, a.numberInSurah)] && <div className="ts-status loaded" style={{ margin: 0 }}>⚡ TS</div>}
                 </div>
               </div>
 
