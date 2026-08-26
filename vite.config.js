@@ -5,7 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+      'Cross-Origin-Opener-Policy': 'unsafe-none',
+      'Cross-Origin-Embedder-Policy': 'unsafe-none',
     },
     proxy: {
       '/audio-proxy': {
@@ -13,6 +14,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: path => path.replace(/^\/audio-proxy/, ''),
       },
+    },
+  },
+  preview: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'unsafe-none',
+      'Cross-Origin-Embedder-Policy': 'unsafe-none',
     },
   },
   test: {
