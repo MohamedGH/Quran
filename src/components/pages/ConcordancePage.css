@@ -1,0 +1,56 @@
+/* Concordance Page Styles */
+.concord-page { flex: 1; overflow-y: auto; padding: 24px 28px 80px; display: flex; flex-direction: column; gap: 20px; }
+.concord-search-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; }
+.concord-search-bar input { flex: 1; min-width: 200px; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text); font-family: 'Amiri Quran', serif; font-size: 20px; direction: rtl; text-align: right; outline: none; transition: border-color var(--transition); }
+.concord-search-bar input:focus { border-color: var(--gold); }
+.concord-search-bar input::placeholder { font-family: 'Cinzel', serif; font-size: 11px; direction: ltr; color: var(--text3); }
+.concord-filter-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.concord-filter-label { font-size: 9px; letter-spacing: 2px; color: var(--text3); flex-shrink: 0; }
+.concord-surah-select { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 5px 10px; color: var(--text2); font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 1px; outline: none; cursor: pointer; max-width: 200px; }
+.concord-surah-select:focus { border-color: var(--gold); }
+.concord-mode-tabs { display: flex; border: 1px solid var(--border2); border-radius: var(--radius-sm); overflow: hidden; }
+.concord-mode-tab { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 1px; padding: 5px 12px; background: transparent; color: var(--text3); border: none; cursor: pointer; border-right: 1px solid var(--border2); transition: all .2s; white-space: nowrap; }
+.concord-mode-tab:last-child { border-right: none; }
+.concord-mode-tab.active { background: rgba(201, 168, 76, .12); color: var(--gold2); }
+.concord-results-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.concord-results-count { font-size: 10px; letter-spacing: 1.5px; color: var(--text3); }
+.concord-results-count span { color: var(--gold2); }
+.concord-group { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 0; }
+.concord-group-header { display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: linear-gradient(90deg, var(--surface2), var(--surface)); border-bottom: 1px solid var(--border); cursor: pointer; transition: background .2s; user-select: none; }
+.concord-group-header:hover { background: var(--surface2); }
+.concord-group-num { width: 28px; height: 28px; border-radius: 50%; background: var(--surface3); border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--gold); font-weight: 600; flex-shrink: 0; }
+.concord-group-name { flex: 1; font-size: 11px; letter-spacing: 1px; color: var(--text); }
+.concord-group-ar { font-family: 'Amiri', serif; font-size: 15px; color: var(--gold); direction: rtl; }
+.concord-group-badge { font-size: 9px; letter-spacing: 1px; padding: 3px 8px; border-radius: 10px; background: rgba(62, 184, 160, .1); border: 1px solid rgba(62, 184, 160, .3); color: var(--teal2); flex-shrink: 0; }
+.concord-group-chevron { font-size: 10px; color: var(--text3); transition: transform .2s; flex-shrink: 0; }
+.concord-group-chevron.open { transform: rotate(90deg); }
+.concord-ayat-item { display: flex; align-items: flex-start; gap: 14px; padding: 14px 18px; border-bottom: 1px solid rgba(42, 47, 64, .3); transition: background .15s; cursor: pointer; }
+.concord-ayat-item:last-child { border-bottom: none; }
+.concord-ayat-item:hover { background: rgba(255, 255, 255, .02); }
+.concord-ayat-num { width: 30px; height: 30px; border: 1px solid var(--border2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text3); flex-shrink: 0; margin-top: 4px; }
+.concord-ayat-text { font-family: 'Amiri Quran', serif; font-size: 22px; direction: rtl; text-align: right; flex: 1; line-height: 2; color: var(--text); }
+.concord-highlight { background: rgba(201, 168, 76, .25); color: var(--gold2); border-radius: 3px; padding: 0 2px; }
+.concord-ayat-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; align-items: flex-end; }
+.concord-go-btn { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 1px; padding: 5px 10px; border: 1px solid var(--border2); background: transparent; color: var(--text3); cursor: pointer; border-radius: var(--radius-sm); transition: all .2s; white-space: nowrap; }
+.concord-go-btn:hover { border-color: var(--gold); color: var(--gold); }
+.concord-link-btn { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 1px; padding: 5px 10px; border: 1px solid var(--border2); background: transparent; color: var(--text3); cursor: pointer; border-radius: var(--radius-sm); transition: all .2s; }
+.concord-link-btn:hover { border-color: var(--teal); color: var(--teal); }
+.concord-link-btn.linked { border-color: var(--teal); color: var(--teal); background: rgba(62, 184, 160, .08); }
+.concord-links-panel { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+.concord-links-title { font-size: 9px; letter-spacing: 3px; color: var(--gold); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.concord-links-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+.concord-link-card { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(42, 47, 64, .3); cursor: pointer; transition: background .15s; }
+.concord-link-card:last-child { border-bottom: none; }
+.concord-link-card:hover { background: rgba(255, 255, 255, .02); }
+.concord-link-ref { font-size: 9px; letter-spacing: 1px; color: var(--gold2); flex-shrink: 0; padding-top: 4px; }
+.concord-link-text { font-family: 'Amiri Quran', serif; font-size: 19px; direction: rtl; text-align: right; flex: 1; line-height: 1.9; color: var(--text2); }
+.concord-link-remove { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border2); background: transparent; color: var(--text3); cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .2s; }
+.concord-link-remove:hover { border-color: var(--red); color: var(--red); }
+.concord-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 60px 20px; color: var(--text3); }
+.concord-empty-arabic { font-family: 'Amiri Quran', serif; font-size: 40px; color: var(--gold); opacity: .25; direction: rtl; }
+.concord-empty-msg { font-size: 11px; letter-spacing: 2px; text-align: center; line-height: 1.8; }
+.concord-loading { display: flex; align-items: center; gap: 12px; padding: 24px; justify-content: center; color: var(--text3); font-size: 10px; letter-spacing: 2px; }
+.concord-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border2); background: var(--surface2); font-size: 9px; letter-spacing: 1px; color: var(--text2); cursor: pointer; transition: all .2s; }
+.concord-tag:hover { border-color: var(--gold); color: var(--gold); }
+.concord-tags-row { display: flex; flex-wrap: wrap; gap: 6px; }
+@media(max-width:700px) { .concord-page { padding: 16px 14px 80px; } .concord-ayat-text { font-size: 18px; } .concord-search-bar input { font-size: 16px; } }
