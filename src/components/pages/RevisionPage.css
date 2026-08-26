@@ -1,0 +1,38 @@
+/* Revision Page Styles */
+.rev-page { flex: 1; overflow-y: auto; padding: 24px 28px 80px; display: flex; flex-direction: column; gap: 20px; }
+.rev-header-block { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.rev-title { font-size: 18px; letter-spacing: 3px; color: var(--gold2); font-weight: 700; }
+.rev-subtitle { font-size: 9px; letter-spacing: 2px; color: var(--text3); margin-top: 4px; }
+.rev-stats-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.rev-stat-pill { display: flex; flex-direction: column; align-items: center; padding: 8px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.rev-stat-num { font-size: 20px; color: var(--gold2); font-weight: 700; }
+.rev-stat-label { font-size: 8px; letter-spacing: 1.5px; color: var(--text3); margin-top: 2px; }
+.rev-filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.rev-filter-btn { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 1px; padding: 5px 12px; border: 1px solid var(--border2); background: transparent; color: var(--text3); cursor: pointer; border-radius: var(--radius-sm); transition: all .2s; }
+.rev-filter-btn:hover { border-color: var(--text2); color: var(--text2); }
+.rev-filter-btn.active { border-color: var(--teal); color: var(--teal); background: rgba(62, 184, 160, .08); }
+.rev-surah-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.rev-surah-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; user-select: none; }
+.rev-surah-header:hover { background: rgba(255, 255, 255, .02); }
+.rev-surah-num { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text3); flex-shrink: 0; }
+.rev-surah-name { flex: 1; }
+.rev-surah-name-ar { font-family: 'Amiri Quran', serif; font-size: 18px; color: var(--text2); direction: rtl; }
+.rev-surah-name-en { font-size: 10px; letter-spacing: 1.5px; color: var(--text3); margin-top: 2px; }
+.rev-surah-badge { font-size: 9px; letter-spacing: 1px; padding: 3px 10px; border-radius: 10px; border: 1px solid var(--green); color: var(--green); white-space: nowrap; }
+.rev-ayat-grid { padding: 0 16px 14px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border); }
+.rev-ayat-card { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.rev-ayat-card.rev-ayat-active { border-color: var(--teal); }
+.rev-ayat-card-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface2); cursor: pointer; }
+.rev-ayat-card-header:hover { background: var(--surface3); }
+.rev-ayat-num { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text3); flex-shrink: 0; }
+.rev-ayat-text-preview { font-family: 'Amiri Quran', serif; font-size: 15px; direction: rtl; color: var(--text2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+.rev-ayat-score-badge { font-size: 9px; letter-spacing: 1px; padding: 2px 8px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+.rev-ayat-score-badge.perfect { border: 1px solid var(--green); color: var(--green); }
+.rev-ayat-score-badge.good { border: 1px solid var(--gold); color: var(--gold); }
+.rev-ayat-score-badge.bad { border: 1px solid var(--red); color: var(--red); }
+.rev-ayat-score-badge.none { border: 1px solid var(--border2); color: var(--text3); }
+.rev-ayat-body { padding: 14px 14px 10px; display: flex; flex-direction: column; gap: 12px; }
+.rev-ayat-arabic { font-family: 'Amiri Quran', serif; font-size: 24px; direction: rtl; text-align: right; color: var(--text); line-height: 1.9; padding: 10px 14px; background: var(--surface2); border-radius: var(--radius-sm); }
+.rev-empty { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 11px; letter-spacing: 2px; }
+.rev-progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+.rev-progress-fill { height: 100%; border-radius: 2px; transition: width .4s ease; }
