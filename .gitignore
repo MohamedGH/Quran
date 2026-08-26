@@ -55,6 +55,7 @@ serverTimestamps/
 time/
 whisper-server/
 other/
+original/
 
 # Firebase / Google Services
 android/app/google-services.json
