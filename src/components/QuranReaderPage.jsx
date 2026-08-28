@@ -11,7 +11,7 @@ import Submenu from "./Submenu";
 import TsGlobalBar from "./TsGlobalBar";
 import MainPlayer from "./MainPlayer";
 import { CollectionModal } from "./pages/CollectionsPage";
-import { getAudioBase, setGlobalRecitator, markBitrateBad, fetchSurahMeta, fetchPageMeta } from "../services/quranApi";
+import { getAudioBase, setGlobalRecitator, markBitrateBad, fetchSurahMeta, fetchPageMeta, loadTimestampsForSurah } from "../services/quranApi";
 
 export default function QuranReaderPage({
   currentUser,
@@ -85,6 +85,19 @@ export default function QuranReaderPage({
   useEffect(() => {
     setGlobalRecitator(recitatorId);
   }, [recitatorId]);
+
+  // Auto-load timestamps for selected surah and reciter when enabled
+  const tsLoadGenRef = useRef(0);
+  useEffect(() => {
+    if (!selectedSurahNum || !enableTimestamps) return;
+    const gen = ++tsLoadGenRef.current;
+    loadTimestampsForSurah(selectedSurahNum, recitatorId).then(parsed => {
+      if (gen !== tsLoadGenRef.current) return;
+      if (parsed && Object.keys(parsed).length > 0) {
+        dispatch(playerActions.updateTimestamp(parsed));
+      }
+    }).catch(() => {});
+  }, [selectedSurahNum, recitatorId, enableTimestamps, dispatch]);
 
   useEffect(() => {
     if (selectedSurahNum) {

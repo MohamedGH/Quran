@@ -109,16 +109,17 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
             return { char: c.char, start: c.start, end: c.end, tajStyle };
           });
           const hasTajweed = charsMapped.some(c => c.tajStyle !== undefined);
-          return { origWord, chars: charsMapped, hasTajweed };
+          return { origWord, chars: charsMapped, hasTajweed, hasTimestampChars: true };
         }
-        return { origWord, chars: [{ char: origWord, start: 0, end: 0, tajStyle: undefined }], hasTajweed: false };
+        return { origWord, chars: [{ char: origWord, start: 0, end: 0, tajStyle: undefined }], hasTajweed: false, hasTimestampChars: false };
       });
     }
 
     return words.map(w => ({
       origWord: w,
       chars: [{ char: w, start: 0, end: 0, tajStyle: undefined }],
-      hasTajweed: false
+      hasTajweed: false,
+      hasTimestampChars: false
     }));
   }, [timestamps, words, showQalqala, showMadd, showIzhar, showIdgham]);
 
@@ -227,7 +228,7 @@ export const ArabicHighlighted = React.memo(React.forwardRef(function ArabicHigh
                   P{partInfo.partIndex + 1}
                 </span>
               )}
-              {item.hasTajweed || currentMs > 0
+              {item.hasTimestampChars || item.hasTajweed || currentMs > 0
                 ? chars.map((c, ci) => {
                     const isCharActive = currentMs > 0 && currentMs >= c.start && currentMs <= c.end;
                     const isCharDone = currentMs > 0 && currentMs > c.end;
